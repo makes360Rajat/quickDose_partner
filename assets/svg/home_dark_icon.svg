@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Chimney -->
+  <path d="M 17 6.5 V 2.5 H 19.5 V 9" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="1.75" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+
+  <!-- Roof Eaves -->
+  <path d="M 2 12.5 L 12 2.5 L 22 12.5" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="1.75" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+
+  <!-- House Body & Doorway -->
+  <path d="M 4.5 10.5 V 21.5 H 9.5 V 16.5 H 14.5 V 21.5 H 19.5 V 10.5" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="1.75" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+</svg>

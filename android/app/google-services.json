@@ -1,0 +1,100 @@
+{
+  "project_info": {
+    "project_number": "1023434845941",
+    "project_id": "quickdoses-743c7",
+    "storage_bucket": "quickdoses-743c7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023434845941:android:0112f87f3fc2fd94c4dfbc",
+        "android_client_info": {
+          "package_name": "com.quickdoses.customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1023434845941-drqsvv6sggmofv4o44cp3odci51v8mus.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.quickdoses.customer",
+            "certificate_hash": "454445cf3c52583b10527537353e278ae158bfab"
+          }
+        },
+        {
+          "client_id": "1023434845941-feebos1egel0fa5c134q47mos13eilpb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.quickdoses.customer",
+            "certificate_hash": "042a0a5315e4cb0493b93247179c5238db9b79bf"
+          }
+        },
+        {
+          "client_id": "1023434845941-nlk084c55vbraarcttvtcea7sp62pjki.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.quickdoses.customer",
+            "certificate_hash": "aaeba8b5874b330c8f4a8343568016f0a25efb08"
+          }
+        },
+        {
+          "client_id": "1023434845941-lbvkmrusf81qf0bbpjqnlne3narmoeat.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0vFyl9jWK9Knqn2Z7NxJVwHbMN9t2mWQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1023434845941-lbvkmrusf81qf0bbpjqnlne3narmoeat.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023434845941:android:88870d6a0253ce11c4dfbc",
+        "android_client_info": {
+          "package_name": "com.quickdoses.seller_partner"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1023434845941-iphud3cp953vudhs1o69ksqbh0554tac.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.quickdoses.seller_partner",
+            "certificate_hash": "5c4f4333a1dc302ac12fefe54b7cf9e2963510a4"
+          }
+        },
+        {
+          "client_id": "1023434845941-lbvkmrusf81qf0bbpjqnlne3narmoeat.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0vFyl9jWK9Knqn2Z7NxJVwHbMN9t2mWQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1023434845941-lbvkmrusf81qf0bbpjqnlne3narmoeat.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
