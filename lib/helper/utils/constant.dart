@@ -19,7 +19,7 @@ class Constant {
   static String playStoreUrl = "https://play.google.com/store/apps/details?id=$packageName";
 
   static int minimumRequiredMobileNumberLength = 7;
-
+  static String androidApiKey = 'AIzaSyBQQZL_AlzJuK7Qy1EOx82-5i9-rLT6bNk';
   static int messageDisplayDuration = 3500; // resend otp timer
 
   // TODO Change this to your app name
@@ -32,7 +32,7 @@ class Constant {
 
   // TODO IOS APP URL HERE
   static String appStoreId = "app_store_id_here";
-  // static String googleApiKey = "";
+  static String googleApiKey = "AIzaSyBQQZL_AlzJuK7Qy1EOx82-5i9-rLT6bNk";
   static String demoMode = "0";
   static Map cityAddressMap = {};
   static String appKey = "app";

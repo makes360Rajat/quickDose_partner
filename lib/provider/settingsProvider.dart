@@ -48,7 +48,15 @@ class SettingsProvider extends ChangeNotifier {
               appSettings.appModeDeliveryBoy ?? "";
           Constant.appMaintenanceModeRemark =
               appSettings.appModeDeliveryBoyRemark ?? "";
-          // Constant.googleApiKey = /* appSettings.googlePlaceApiKey */ appSettings.apiKey ?? "";
+          if (appSettings.googlePlaceApiKey != null &&
+              appSettings.googlePlaceApiKey!.trim().startsWith("AIzaSy")) {
+            Constant.googleApiKey = appSettings.googlePlaceApiKey!.trim();
+          } else if (appSettings.apiKey != null &&
+              appSettings.apiKey!.trim().startsWith("AIzaSy")) {
+            Constant.googleApiKey = appSettings.apiKey!.trim();
+          } else {
+            Constant.googleApiKey = "AIzaSyBQQZL_AlzJuK7Qy1EOx82-5i9-rLT6bNk";
+          }
           Constant.enableRoadPathTracking = appSettings.enableRoadPathTracking ?? "0";
           return true;
         }

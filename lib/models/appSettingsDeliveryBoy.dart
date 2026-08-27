@@ -83,12 +83,14 @@ class AppSettingsDeliveryBoyData {
     appModeSeller = json['app_mode_seller'].toString();
     appModeDeliveryBoy = json['app_mode_delivery_boy'].toString();
     appModeDeliveryBoyRemark = json['app_mode_delivery_boy_remark'].toString();
-    googlePlaceApiKey = json['google_place_api_key'].toString();
+    googlePlaceApiKey = json['google_place_api_key'] != null && json['google_place_api_key'].toString() != "null"
+        ? json['google_place_api_key'].toString()
+        : null;
     privacyPolicyDeliveryBoy = json['privacy_policy_delivery_boy'].toString();
     termsConditionsDeliveryBoy =
         json['terms_conditions_delivery_boy'].toString();
-    allPermissions = json['allPermissions'].cast<String>();
-    apiKey = json['apiKey'] ?? "";
+    allPermissions = json['allPermissions'] != null ? json['allPermissions'].cast<String>() : [];
+    apiKey = json['apiKey'] != null && json['apiKey'].toString() != "null" ? json['apiKey'].toString() : "";
     enableRoadPathTracking = json['enable_road_path_tracking'] ?? "0";
   }
 

@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:project/helper/utils/generalImports.dart';
-// import 'package:http/http.dart' as http;
+
+import 'package:http/http.dart' as http;
 
 class OrderTrackerScreen extends StatefulWidget {
   final double addressLatitude;
@@ -106,79 +107,102 @@ class _OrderTrackerScreenState extends State<OrderTrackerScreen> {
   }
 
   getDeliveryBoyLocation() async {
-    var position = await GeolocatorPlatform.instance.getCurrentPosition(
-        locationSettings: LocationSettings(
-      accuracy: LocationAccuracy.high,
-    ));
+    try {
+      var position = await GeolocatorPlatform.instance.getCurrentPosition(
+          locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ));
 
-    setState(() {
-      currentPosition = LatLng(position.latitude, position.longitude);
-    });
+      if (mounted) {
+        setState(() {
+          currentPosition = LatLng(position.latitude, position.longitude);
+        });
+      }
 
-    context.read<LiveOrderTrackingProvider>().updateDeliveryBoyLatLongProvider(
-      params: {
-        ApiAndParams.orderStatus: "5",
-        ApiAndParams.orderId: widget.orderId,
-        ApiAndParams.latitude: currentPosition.latitude.toString(),
-        ApiAndParams.longitude: currentPosition.longitude.toString(),
-      },
-      context: context,
-    ).then(
-      (value) async{
-        DEST = LatLng(widget.addressLatitude,
-            widget.addressLongitude); // Static source coordinates
+      DEST = LatLng(widget.addressLatitude, widget.addressLongitude);
+      SOURCE = currentPosition;
 
-        polylineCoordinates.add(DEST);
+      // Immediately fetch route points for instant map update
+      getRoutePoints(SOURCE, DEST).then((routePoints) {
+        if (mounted) {
+          setState(() {
+            polylineCoordinates = List<LatLng>.from(routePoints);
 
-        SOURCE = LatLng(
-            context.read<LiveOrderTrackingProvider>().deliveryBoyLatitude,
-            context
-                .read<LiveOrderTrackingProvider>()
-                .deliveryBoyLongitude); // Dynamic destination coordinate
-        if (polylineCoordinates.contains(SOURCE)) {
-          polylineCoordinates.remove(SOURCE);
+            _markers.clear();
+            _markers.add(
+              Marker(
+                markerId: const MarkerId('SOURCE'),
+                position: SOURCE,
+                icon: deliveryBoyIcon,
+              ),
+            );
+
+            _markers.add(
+              Marker(
+                markerId: const MarkerId('DEST'),
+                position: DEST,
+                icon: customerIcon,
+              ),
+            );
+          });
         }
-        polylineCoordinates.clear();
-        polylineCoordinates.add(SOURCE);
-        polylineCoordinates.add(DEST);
+      });
 
-        _markers.clear();
-        _markers.add(
-          Marker(
-            markerId: MarkerId('SOURCE'),
-            position: SOURCE,
-            icon: deliveryBoyIcon,
-          ),
-        );
-
-        _markers.add(
-          Marker(
-            markerId: MarkerId('DEST'),
-            position: DEST,
-            icon: customerIcon,
-          ),
-        );
-      },
-    );
+      // Sync updated lat/long with backend server
+      context.read<LiveOrderTrackingProvider>().updateDeliveryBoyLatLongProvider(
+        params: {
+          ApiAndParams.orderStatus: "5",
+          ApiAndParams.orderId: widget.orderId,
+          ApiAndParams.latitude: currentPosition.latitude.toString(),
+          ApiAndParams.longitude: currentPosition.longitude.toString(),
+        },
+        context: context,
+      );
+    } catch (e) {
+      debugPrint("Error getting delivery boy location: $e");
+    }
   }
 
-  //street router
-  /* Future<List<LatLng>> getRoutePoints(LatLng origin, LatLng destination) async {
-    final url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=${Platform.isAndroid ? Constant.androidApiKey : Constant.iOSApiKey}';//${Constant.decodeBase64(Constant.googleApiKey)}';
-    final response = await http.get(Uri.parse(url));
+  // Street router - Google Directions API
+  Future<List<LatLng>> getRoutePoints(LatLng origin, LatLng destination) async {
+    try {
+      String apiKey = Constant.googleApiKey.trim();
+      if (!apiKey.startsWith("AIzaSy")) {
+        apiKey = "AIzaSyBQQZL_AlzJuK7Qy1EOx82-5i9-rLT6bNk";
+      }
+      final url =
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&mode=driving&key=$apiKey';
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final points = data['routes'][0]['overview_polyline']['points'];
-      return decodePolyline(points);
-    } else {
+      debugPrint("Directions API using Key: '$apiKey'");
+      debugPrint("Directions API URL: $url");
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'OK' &&
+            data['routes'] != null &&
+            (data['routes'] as List).isNotEmpty) {
+          final points = data['routes'][0]['overview_polyline']['points'];
+          final decoded = decodePolyline(points);
+          debugPrint("Google Directions API decoded ${decoded.length} road route points.");
+          return decoded;
+        } else {
+          debugPrint("Directions API response status: ${data['status']} message: ${data['error_message'] ?? ''}");
+          return [origin, destination];
+        }
+      } else {
+        debugPrint("Directions API HTTP error code: ${response.statusCode}");
+        return [origin, destination];
+      }
+    } catch (e) {
+      debugPrint("Error in getRoutePoints: $e");
       return [origin, destination];
     }
-  } */
+  }
 
-  //street router
-  /* List<LatLng> decodePolyline(String encoded) {
+  // Decode overview_polyline string to List<LatLng>
+  List<LatLng> decodePolyline(String encoded) {
     List<LatLng> poly = [];
     int index = 0, len = encoded.length;
     int lat = 0, lng = 0;
@@ -207,7 +231,7 @@ class _OrderTrackerScreenState extends State<OrderTrackerScreen> {
     }
 
     return poly;
-  } */
+  }
 
   Future<LocationPermission> getLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
@@ -579,16 +603,16 @@ class _OrderTrackerScreenState extends State<OrderTrackerScreen> {
         mapZoom = position.zoom;
       },
       polylines: {
-        Polyline(
-          polylineId: PolylineId("1"),
-          color: ColorsRes.appColor,
-          points: polylineCoordinates,
-          visible: true,
-          zIndex: -1,
-          width: 2,
-          consumeTapEvents: true,
-          geodesic: true,
-        )
+        if (polylineCoordinates.isNotEmpty)
+          Polyline(
+            polylineId: PolylineId("order_route_${polylineCoordinates.length}"),
+            color: ColorsRes.appColor,
+            points: List<LatLng>.from(polylineCoordinates),
+            visible: true,
+            zIndex: 2,
+            width: 5,
+            consumeTapEvents: true,
+          )
       },
       markers: _markers, // Use updated markers
     );
