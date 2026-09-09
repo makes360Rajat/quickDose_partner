@@ -933,6 +933,85 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               }
                             }),
                           ),
+                          if (order.deliveryProofImages != null && order.deliveryProofImages!.isNotEmpty) ...[
+                            getSizedBox(height: 15),
+                            CustomTextLabel(
+                              jsonKey: proofOfDeliveryLabel,
+                              style: TextStyle(color: ColorsRes.appColor, fontWeight: FontWeight.w500, fontSize: 20),
+                            ),
+                            getSizedBox(height: 10),
+                            Container(
+                              width: double.maxFinite,
+                              padding: EdgeInsets.all(Constant.paddingOrMargin10),
+                              margin: EdgeInsetsDirectional.only(bottom: Constant.paddingOrMargin10),
+                              decoration: DesignConfig.boxDecoration(Theme.of(context).cardColor, 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CustomTextLabel(
+                                    jsonKey: deliveredItemsProofLabel,
+                                    style: TextStyle(color: ColorsRes.grey, fontSize: 13),
+                                  ),
+                                  getSizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    children: List.generate(order.deliveryProofImages!.length, (index) {
+                                      String imgUrl = order.deliveryProofImages![index];
+                                      return GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ProductFullScreenImagesScreen(
+                                                images: order.deliveryProofImages!,
+                                                initialPage: index,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(color: ColorsRes.appColor.withOpacity(0.3), width: 1),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Stack(
+                                              children: [
+                                                setNetworkImg(
+                                                  image: imgUrl,
+                                                  width: 85,
+                                                  height: 85,
+                                                  boxFit: BoxFit.cover,
+                                                ),
+                                                Positioned(
+                                                  right: 4,
+                                                  bottom: 4,
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(4),
+                                                    decoration: const BoxDecoration(
+                                                      color: Colors.black54,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.zoom_in,
+                                                      size: 14,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -1189,315 +1268,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                     ),
                                   ],
                                 ),
-                              /* GestureDetector(
-                                onTap: () {
-                                  showModalBottomSheet<void>(
-                                    backgroundColor: Theme.of(context).cardColor,
-                                    context: context,
-                                    isScrollControlled: true,
-                                    shape: DesignConfig.setRoundedBorderSpecific(20, istop: true),
-                                    builder: (BuildContext context) {
-                                      return MultiProvider(
-                                        providers: [
-                                          ChangeNotifierProvider(create: (context) => DeliveryBoysProvider()),
-                                          // if (isPickup)
-                                            ChangeNotifierProvider(create: (context) => PickupOrderUpdateStatusProvider()),
-                                          // else
-                                            ChangeNotifierProvider(create: (context) => OrderUpdateStatusProvider()),
-                                            ChangeNotifierProvider(create: (context) => ReturnOrderUpdateStatusProvider()),
-                                          ChangeNotifierProvider(create: (context) => OrderDetailProvider()),
-                                        ],
-                                        child: Consumer3<OrderUpdateStatusProvider, PickupOrderUpdateStatusProvider, ReturnOrderUpdateStatusProvider>(
-                                          builder: (context, ordersProvider, pickupOrdersProvider, returnOrdersProvider, child) {
-                                            if (isPickup) {
-                                              if (context.read<PickupOrderUpdateStatusProvider>().ordersStatusState ==
-                                                  PickupOrderUpdateStatusState.initial) {
-                                                context.read<PickupOrderUpdateStatusProvider>().setSelectedStatus(
-                                                      (int.parse(order.activeStatus.toString()) - 1).toString(),
-                                                    );
-                                                context.read<PickupOrderUpdateStatusProvider>().getOrdersStatuses(context: context, from: "");
-                                              }
-                                            } else {
-                                              if (context.read<OrderUpdateStatusProvider>().ordersStatusState == OrderUpdateStatusState.initial) {
-                                                context.read<OrderUpdateStatusProvider>().setSelectedStatus(
-                                                      (int.parse(order.activeStatus.toString()) - 1).toString(),
-                                                    );
-                                                context.read<OrderUpdateStatusProvider>().getOrdersStatuses(context: context, from: widget.isReturn==true?"return":"");
-                                              }
-                                            }
-                                            return Container(
-                                              padding: EdgeInsetsDirectional.only(
-                                                start: Constant.paddingOrMargin15,
-                                                end: Constant.paddingOrMargin15,
-                                                top: Constant.paddingOrMargin15,
-                                                bottom: Constant.paddingOrMargin15,
-                                              ),
-                                              child: Column(
-                                                mainAxisSize: .min,
-                                                children: [
-                                                  Center(
-                                                    child: CustomTextLabel(
-                                                      jsonKey: updateOrderStatusLabel,
-                                                      softWrap: true,
-                                                      textAlign: TextAlign.center,
-                                                      style: Theme.of(
-                                                        context,
-                                                      ).textTheme.titleMedium!.merge(TextStyle(letterSpacing: 0.5, color: ColorsRes.mainTextColor)),
-                                                    ),
-                                                  ),
-                                                  getSizedBox(height: 10),
-                                                  if (isPickup
-                                                      ? (pickupOrdersProvider.ordersStatusState == PickupOrderUpdateStatusState.loaded ||
-                                                          pickupOrdersProvider.ordersStatusState == PickupOrderUpdateStatusState.updating)
-                                                      : (ordersProvider.ordersStatusState == OrderUpdateStatusState.loaded ||
-                                                          ordersProvider.ordersStatusState == OrderUpdateStatusState.updating))
-                                                    Column(
-                                                      children: List.generate(
-                                                          isPickup
-                                                              ? pickupOrdersProvider.orderStatusesList.length
-                                                              : ordersProvider.orderStatusesList.length /*  - 2 */, (index) {
-                                                        return GestureDetector(
-                                                          onTap: () {
-                                                            isPickup
-                                                                ? pickupOrdersProvider.setSelectedStatus(index.toString())
-                                                                : ordersProvider.setSelectedStatus(index.toString());
-                                                          },
-                                                          child: Container(
-                                                            child: Row(
-                                                              children: [
-                                                                Expanded(
-                                                                  child: Padding(
-                                                                    padding: EdgeInsetsDirectional.only(start: Constant.paddingOrMargin10),
-                                                                    child: CustomTextLabel(
-                                                                      text: isPickup
-                                                                          ? (pickupOrdersProvider.orderStatusesList[index].status ?? "")
-                                                                          : (ordersProvider.orderStatusesList[index].status ?? ""),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                Radio(
-                                                                  activeColor: ColorsRes.appColor,
-                                                                  value: isPickup
-                                                                      ? (pickupOrdersProvider.selectedOrderStatus)
-                                                                      : (ordersProvider.selectedOrderStatus),
-                                                                  groupValue: isPickup
-                                                                      ? context.watch<PickupOrderUpdateStatusProvider>().orderStatusesList[index].id
-                                                                      : context.watch<OrderUpdateStatusProvider>().orderStatusesList[index].id,
-                                                                  onChanged: (value) {
-                                                                    isPickup
-                                                                        ? (pickupOrdersProvider..setSelectedStatus(index.toString()))
-                                                                        : (ordersProvider.setSelectedStatus(index.toString()));
-                                                                  },
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }),
-                                                    ),
-                                                  getSizedBox(height: 10),
-                                                  if (isPickup
-                                                      ? (ordersProvider.ordersStatusState == PickupOrderUpdateStatusState.loading)
-                                                      : (ordersProvider.ordersStatusState == OrderUpdateStatusState.loading))
-                                                    Column(
-                                                      children: List.generate(8, (index) {
-                                                        return CustomShimmer(
-                                                          height: 26,
-                                                          width: double.maxFinite,
-                                                          margin: EdgeInsetsDirectional.all(10),
-                                                        );
-                                                      }),
-                                                    ),
-                                                  if (isPickup
-                                                      ? (pickupOrdersProvider.ordersStatusState == PickupOrderUpdateStatusState.loaded ||
-                                                          pickupOrdersProvider.ordersStatusState == PickupOrderUpdateStatusState.updating)
-                                                      : (ordersProvider.ordersStatusState == OrderUpdateStatusState.loaded ||
-                                                          ordersProvider.ordersStatusState == OrderUpdateStatusState.updating))
-                                                    Padding(
-                                                      padding: EdgeInsets.symmetric(horizontal: Constant.paddingOrMargin10),
-                                                      child: gradientBtnWidget(
-                                                        context,
-                                                        10,
-                                                        callback: () {
-                                                          Map<String, String> params = {};
-                                                          if (orderDetailProvider.orderDetail.data?.order?.otp.toString() != "0" &&
-                                                              ordersProvider.selectedOrderStatus.toString() == "6") {
-                                                            TextEditingController editTextController = TextEditingController();
 
-                                                            showDialog(
-                                                              context: context,
-                                                              builder: (BuildContext context) {
-                                                                return StatefulBuilder(
-                                                                  builder: (BuildContext context, StateSetter setState) {
-                                                                    return AlertDialog(
-                                                                      backgroundColor: Theme.of(context).cardColor,
-                                                                      content: Column(
-                                                                        mainAxisSize: .min,
-                                                                        children: [
-                                                                          CustomTextLabel(
-                                                                            jsonKey: getTranslatedValue(context, customerWillShareOtpLabel),
-                                                                            softWrap: true,
-                                                                          ),
-                                                                          const SizedBox(height: 10),
-                                                                          TextField(
-                                                                            controller: editTextController,
-                                                                            keyboardType: TextInputType.number,
-                                                                            focusNode: Platform.isIOS ? focusNode : null,
-                                                                            style: TextStyle(color: ColorsRes.mainTextColor),
-                                                                            inputFormatters: [
-                                                                              FilteringTextInputFormatter.digitsOnly,
-                                                                              // Allow digits only
-                                                                              LengthLimitingTextInputFormatter(6),
-                                                                              // Limit to 6 digits
-                                                                            ],
-                                                                            decoration: InputDecoration(
-                                                                              hintText: getTranslatedValue(context, enter6DigitOtpLabel),
-                                                                              hintStyle: TextStyle(color: ColorsRes.grey),
-                                                                              counterText: '',
-                                                                            ),
-                                                                            onChanged: (value) {
-                                                                              // Update the dialog state when the input changes
-                                                                              setState(() {});
-                                                                            },
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      actions: [
-                                                                        TextButton(
-                                                                          onPressed: () {
-                                                                            Navigator.of(context).pop();
-                                                                          },
-                                                                          child: Text(getTranslatedValue(context, cancelLabel)),
-                                                                        ),
-                                                                        ElevatedButton(
-                                                                          onPressed: editTextController.text.length == 6
-                                                                              ? () {
-                                                                                  if (editTextController.text ==
-                                                                                      orderDetailProvider.orderDetail.data?.order?.otp.toString()) {
-                                                                                    params[ApiAndParams.orderId] = widget.orderId;
-                                                                                    params[ApiAndParams.statusId] = isPickup
-                                                                                        ? pickupOrdersProvider.selectedOrderStatus
-                                                                                        : ordersProvider.selectedOrderStatus.toString();
-                                                                                    params[ApiAndParams.deliveryBoyId] =
-                                                                                        order.deliveryBoyId.toString();
-                                                                                    ordersProvider
-                                                                                        .updateOrdersStatus(params: params, context: context)
-                                                                                        .then((value) {
-                                                                                      Navigator.pop(context, value);
-                                                                                    });
-                                                                                  } else {
-                                                                                    showMessage(
-                                                                                      context,
-                                                                                      getTranslatedValue(context, invalidOtpLabel),
-                                                                                      MessageType.warning,
-                                                                                    );
-                                                                                  }
-                                                                                }
-                                                                              : null,
-                                                                          child: const Text(getTranslatedValue(context, submitLabel)),
-                                                                        ),
-                                                                      ],
-                                                                    );
-                                                                  },
-                                                                );
-                                                              },
-                                                            ).then((value) {
-                                                              Navigator.pop(context, value);
-                                                            });
-                                                          } else {
-                                                            params[ApiAndParams.orderId] = widget.orderId;
-                                                            params[ApiAndParams.statusId] = isPickup
-                                                                ? pickupOrdersProvider.selectedOrderStatus.toString()
-                                                                : ordersProvider.selectedOrderStatus.toString();
-                                                            params[ApiAndParams.deliveryBoyId] = order.deliveryBoyId.toString();
-                                                            isPickup
-                                                                ? (pickupOrdersProvider
-                                                                    .updateOrdersStatus(params: params, context: context)
-                                                                    .then((value) {
-                                                                    Navigator.pop(context, value);
-                                                                  }))
-                                                                : (ordersProvider.updateOrdersStatus(params: params, context: context).then((value) {
-                                                                    Navigator.pop(context, value);
-                                                                  }));
-                                                          }
-                                                        },
-                                                        otherWidgets: Container(
-                                                          child: (isPickup
-                                                                  ? (pickupOrdersProvider.ordersStatusState == PickupOrderUpdateStatusState.loaded)
-                                                                  : (ordersProvider.ordersStatusState == OrderUpdateStatusState.loaded))
-                                                              ? CustomTextLabel(
-                                                                  jsonKey: updateOrderStatusLabel,
-                                                                  softWrap: true,
-                                                                  style: Theme.of(context).textTheme.titleMedium!.merge(
-                                                                        TextStyle(
-                                                                            color: ColorsRes.appColorWhite,
-                                                                            letterSpacing: 0.5,
-                                                                            fontWeight: FontWeight.w500),
-                                                                      ),
-                                                                )
-                                                              : CircularProgressIndicator(color: ColorsRes.appColorWhite),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  if (isPickup
-                                                      ? (pickupOrdersProvider.ordersStatusState == PickupOrderUpdateStatusState.loading)
-                                                      : (ordersProvider.ordersStatusState == OrderUpdateStatusState.loading))
-                                                    Padding(
-                                                      padding: EdgeInsetsDirectional.only(
-                                                        top: Constant.paddingOrMargin10,
-                                                        start: Constant.paddingOrMargin10,
-                                                        end: Constant.paddingOrMargin10,
-                                                      ),
-                                                      child: CustomShimmer(height: 55, width: double.maxFinite),
-                                                    ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    },
-                                  ).then((value) {
-                                    orderDetailProvider.getOrderDetail(context: context, orderId: widget.orderId);
-                                  });
-                                },
-                                child: Container(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  padding: EdgeInsetsDirectional.all(Constant.paddingOrMargin5),
-                                  margin: EdgeInsetsDirectional.only(start: 5),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border?.all(color: ColorsRes.appColor, width: 1),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: .start,
-                                          children: [
-                                            CustomTextLabel(
-                                              jsonKey: statusLabel,
-                                              style: TextStyle(color: ColorsRes.grey),
-                                              softWrap: true,
-                                            ),
-                                            getSizedBox(height: 2),
-                                            CustomTextLabel(
-                                              text:
-                                                  getTranslatedValue(context, Constant.getOrderStatusDisplayName(context, order.activeStatus ?? "0", isReturn: widget.from=="return"?true:false)),
-                                              style: TextStyle(fontWeight: FontWeight.w500, color: ColorsRes.mainTextColor),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              softWrap: true,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Icon(Icons.arrow_drop_down),
-                                    ],
-                                  ),
-                                ),
-                              ), */
                               GestureDetector(
                                 onTap: () {
                                   showModalBottomSheet<void>(
@@ -1712,87 +1483,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                                       10,
                                                       callback: () {
                                                         Map<String, String> params = {};
-
-                                                        // Check if OTP verification is needed for non-pickup, non-return orders
+                                                        // Check if delivered status is selected for delivery boy on normal orders
                                                         if (!Constant.session.isSeller() && !isPickup && !isReturn &&
-                                                            orderDetailProvider.orderDetail.data?.order?.otp.toString() != "0" &&
                                                             ordersProvider.selectedOrderStatus.toString() == "6") {
-                                                          // Show OTP dialog
-                                                          TextEditingController editTextController = TextEditingController();
-
                                                           showDialog(
                                                             context: context,
-                                                            builder: (BuildContext context) {
-                                                              return StatefulBuilder(
-                                                                builder: (BuildContext context, StateSetter setState) {
-                                                                  return AlertDialog(
-                                                                    backgroundColor: Theme.of(context).cardColor,
-                                                                    content: Column(
-                                                                      mainAxisSize: .min,
-                                                                      children: [
-                                                                        CustomTextLabel(
-                                                                          jsonKey: getTranslatedValue(context, customerWillShareOtpLabel),
-                                                                          softWrap: true,
-                                                                        ),
-                                                                        const SizedBox(height: 10),
-                                                                        TextField(
-                                                                          controller: editTextController,
-                                                                          keyboardType: TextInputType.number,
-                                                                          focusNode: Platform.isIOS ? focusNode : null,
-                                                                          style: TextStyle(color: ColorsRes.mainTextColor),
-                                                                          inputFormatters: [
-                                                                            FilteringTextInputFormatter.digitsOnly,
-                                                                            LengthLimitingTextInputFormatter(6),
-                                                                          ],
-                                                                          decoration: InputDecoration(
-                                                                            hintText: getTranslatedValue(context, enter6DigitOtpLabel),
-                                                                            hintStyle: TextStyle(color: ColorsRes.grey),
-                                                                            counterText: '',
-                                                                          ),
-                                                                          onChanged: (value) {
-                                                                            setState(() {});
-                                                                          },
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    actions: [
-                                                                      TextButton(
-                                                                        onPressed: () {
-                                                                          Navigator.of(context).pop();
-                                                                        },
-                                                                        child: Text(getTranslatedValue(context, cancelLabel)),
-                                                                      ),
-                                                                      ElevatedButton(
-                                                                        onPressed: editTextController.text.length == 6
-                                                                            ? () {
-                                                                                if (editTextController.text ==
-                                                                                    orderDetailProvider.orderDetail.data?.order?.otp.toString()) {
-                                                                                  params[ApiAndParams.orderId] = widget.orderId;
-                                                                                  params[ApiAndParams.statusId] = ordersProvider.selectedOrderStatus.toString();
-                                                                                  params[ApiAndParams.deliveryBoyId] = order.deliveryBoyId.toString();
-                                                                                  ordersProvider
-                                                                                      .updateOrdersStatus(params: params, context: context)
-                                                                                      .then((value) {
-                                                                                    Navigator.pop(context);
-                                                                                    Navigator.pop(context, value);
-                                                                                  });
-                                                                                } else {
-                                                                                  showMessage(
-                                                                                    context,
-                                                                                    getTranslatedValue(context, invalidOtpLabel),
-                                                                                    MessageType.warning,
-                                                                                  );
-                                                                                }
-                                                                              }
-                                                                            : null,
-                                                                        child: Text(getTranslatedValue(context, submitLabel)),
-                                                                      ),
-                                                                    ],
-                                                                  );
-                                                                },
+                                                            barrierDismissible: false,
+                                                            builder: (BuildContext dialogContext) {
+                                                              return DeliveryProofDialog(
+                                                                orderId: widget.orderId,
+                                                                deliveryBoyId: order.deliveryBoyId.toString(),
+                                                                statusId: "6",
+                                                                otp: orderDetailProvider.orderDetail.data?.order?.otp?.toString(),
                                                               );
                                                             },
-                                                          );
+                                                          ).then((value) {
+                                                            if (value == true) {
+                                                              Navigator.pop(context, value);
+                                                            }
+                                                          });
                                                         } else {
                                                           // Normal flow without OTP for pickup or return orders
                                                           params[ApiAndParams.orderId] = widget.orderId;

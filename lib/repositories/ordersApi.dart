@@ -70,18 +70,36 @@ Future<Map<String, dynamic>> getPickupOrderStatusesRepository({required BuildCon
 }
 
 Future<Map<String, dynamic>> updateOrderStatusRepository(
-    {required Map<String, String> params}) async {
+    {required Map<String, String> params, Map<String, File>? filesMap}) async {
   try {
-    final response = await sendApiRequest(
+    if (filesMap != null && filesMap.isNotEmpty) {
+      final response = await sendApiMultiPartRequest(
         apiName: ApiAndParams.apiUpdateOrderStatus,
         params: params,
-        isPost: true);
+        filesMap: filesMap,
+      );
+      if (response == null) {
+        throw Exception("Something went wrong");
+      }
+      if (response is String) {
+        return json.decode(response);
+      } else if (response is Map) {
+        return Map<String, dynamic>.from(response);
+      } else {
+        throw Exception("Unsupported response type");
+      }
+    } else {
+      final response = await sendApiRequest(
+          apiName: ApiAndParams.apiUpdateOrderStatus,
+          params: params,
+          isPost: true);
 
-    if (response == null) {
-      throw Exception("Something went wrong");
+      if (response == null) {
+        throw Exception("Something went wrong");
+      }
+
+      return json.decode(response);
     }
-
-    return json.decode(response);
   } catch (e) {
     throw e;
   }

@@ -68,13 +68,14 @@ class OrderUpdateStatusProvider extends ChangeNotifier {
   Future updateOrdersStatus({
     required Map<String, String> params,
     required BuildContext context,
+    Map<String, File>? filesMap,
   }) async {
     try {
       ordersStatusState = OrderUpdateStatusState.updating;
       notifyListeners();
 
       Map<String, dynamic> getUpdatedOrderData =
-          await updateOrderStatusRepository(params: params);
+          await updateOrderStatusRepository(params: params, filesMap: filesMap);
 
       if (getUpdatedOrderData[ApiAndParams.status].toString() == "1") {
         ordersStatusState = OrderUpdateStatusState.loaded;

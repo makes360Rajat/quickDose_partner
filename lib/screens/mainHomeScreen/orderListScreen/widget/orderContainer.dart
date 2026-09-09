@@ -609,24 +609,43 @@ class OrderContainer extends StatelessWidget {
                                             context,
                                             10,
                                             callback: () {
-                                              Map<String, String> params = {};
-                                              params[ApiAndParams.orderId] =
-                                                  order.orderId.toString();
-                                              params[ApiAndParams.statusId] =
-                                                  ordersProvider
-                                                      .selectedOrderStatus
-                                                      .toString();
-                                              params[ApiAndParams.deliveryBoyId] = order.deliveryBoyId.toString();
-                                              ordersProvider
-                                                  .updateOrdersStatus(
-                                                    params: params,
-                                                    context: context,
-                                                  )
-                                                  .then(
-                                                    (value) {
-                                                        Navigator.pop(context);
-                                                        }
-                                                  );
+                                              if (!Constant.session.isSeller() &&
+                                                  ordersProvider.selectedOrderStatus.toString() == "6") {
+                                                showDialog(
+                                                  context: context,
+                                                  barrierDismissible: false,
+                                                  builder: (BuildContext dialogContext) {
+                                                    return DeliveryProofDialog(
+                                                      orderId: order.orderId.toString(),
+                                                      deliveryBoyId: order.deliveryBoyId.toString(),
+                                                      statusId: "6",
+                                                      otp: order.otp?.toString(),
+                                                    );
+                                                  },
+                                                ).then((value) {
+                                                  if (value == true) {
+                                                    Navigator.pop(context, value);
+                                                  }
+                                                });
+                                              } else {
+                                                Map<String, String> params = {};
+                                                params[ApiAndParams.orderId] =
+                                                    order.orderId.toString();
+                                                params[ApiAndParams.statusId] =
+                                                    ordersProvider
+                                                        .selectedOrderStatus
+                                                        .toString();
+                                                params[ApiAndParams.deliveryBoyId] =
+                                                    order.deliveryBoyId.toString();
+                                                ordersProvider
+                                                    .updateOrdersStatus(
+                                                      params: params,
+                                                      context: context,
+                                                    )
+                                                    .then((value) {
+                                                  Navigator.pop(context, value);
+                                                });
+                                              }
                                             },
                                             otherWidgets: Container(
                                               child: (ordersProvider

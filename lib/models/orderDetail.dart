@@ -152,9 +152,11 @@ class Order {
   String? cityName;
   List<AdditionalCharges>? additionalCharges;
   String? orderStatusName;
+  List<String>? deliveryProofImages;
 
   Order(
       {this.id,
+      this.deliveryProofImages,
       this.userId,
       this.deliveryBoyId,
       this.deliveryBoyBonusDetails,
@@ -326,10 +328,20 @@ class Order {
         ? List<AdditionalCharges>.from(json['additional_charges'].map((x) => AdditionalCharges.fromJson(x)))
         : [];
     orderStatusName = json['order_status_name']??"";
+    if (json['delivery_proof_images'] != null && json['delivery_proof_images'] is List) {
+      deliveryProofImages = List<String>.from(json['delivery_proof_images'].map((x) => x.toString()));
+    } else if (json['delivery_images'] != null && json['delivery_images'] is List) {
+      deliveryProofImages = List<String>.from(json['delivery_images'].map((x) => x.toString()));
+    } else {
+      deliveryProofImages = [];
+    }
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
+    if (this.deliveryProofImages != null) {
+      data['delivery_proof_images'] = this.deliveryProofImages;
+    }
     data['id'] = this.id;
     data['user_id'] = this.userId;
     data['delivery_boy_id'] = this.deliveryBoyId;

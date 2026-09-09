@@ -599,3 +599,12 @@ const String sellerNameLabel = "seller_name";
 const String salaryLabel = "salary";
 const String emptySalaryMessageLabel = "empty_salary_message";
 const String emptySalaryDescriptionLabel = "empty_salary_description";
+
+// Proof of Delivery
+const String proofOfDeliveryLabel = "proof_of_delivery";
+const String addProofOfDeliveryPhotoLabel = "add_proof_of_delivery_photo";
+const String atLeastOneImageRequiredLabel = "at_least_one_image_required";
+const String max3ImagesAllowedLabel = "max_3_images_allowed";
+const String takePhotoOrSelectImageLabel = "take_photo_or_select_image";
+const String deliveredItemsProofLabel = "delivered_items_proof";
+

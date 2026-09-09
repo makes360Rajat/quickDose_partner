@@ -133,6 +133,7 @@ export 'package:project/screens/mainHomeScreen/profileMenuScreen/widget/profileM
 export 'package:project/screens/orderDetailScreen/orderDetailScreen.dart';
 export 'package:project/screens/orderDetailScreen/widget/orderDetailContainer.dart';
 export 'package:project/screens/orderDetailScreen/widget/orderItemsDetailContainer.dart';
+export 'package:project/screens/orderDetailScreen/widget/deliveryProofDialog.dart';
 export 'package:project/screens/orderTrackerScreen.dart';
 export 'package:project/screens/productFullScreenImagesScreen.dart';
 export 'package:project/screens/ratingAndReviewScreen.dart';

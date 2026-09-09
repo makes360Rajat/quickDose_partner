@@ -1015,103 +1015,38 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       context,
                                                       10,
                                                       callback: () {
-                                                        Map<String, String> params = {};
-                                                        if (DeliveryBoyOrdersProvider.selectedOrderStatus.toString() == "6" && order.otp != "0") {
-                                                          TextEditingController editTextController = TextEditingController();
-
-                                                          showDialog(
-                                                            context: context,
-                                                            builder: (BuildContext context) {
-                                                              return StatefulBuilder(
-                                                                builder: (BuildContext context, StateSetter setState) {
-                                                                  return AlertDialog(
-                                                                    backgroundColor: Theme.of(context).cardColor,
-                                                                    content: Column(
-                                                                      mainAxisSize: .min,
-                                                                      children: [
-                                                                        const CustomTextLabel(
-                                                                          jsonKey: customerWillShareOtpLabel,
-                                                                          softWrap: true,
-                                                                        ),
-                                                                        const SizedBox(height: 10),
-                                                                        TextField(
-                                                                          controller: editTextController,
-                                                                          focusNode: Platform.isIOS ? focusNode : null,
-                                                                          keyboardType: TextInputType.number,
-                                                                          style: TextStyle(color: ColorsRes.mainTextColor),
-                                                                          inputFormatters: [
-                                                                            FilteringTextInputFormatter.digitsOnly,
-                                                                            // Allow digits only
-                                                                            LengthLimitingTextInputFormatter(6),
-                                                                            // Limit to 6 digits
-                                                                          ],
-                                                                          decoration: InputDecoration(
-                                                                            hintText: getTranslatedValue(context, enter6DigitOtpLabel),
-                                                                            hintStyle: TextStyle(color: ColorsRes.grey),
-                                                                            counterText: '',
-                                                                          ),
-                                                                          onChanged: (value) {
-                                                                            // Update the dialog state when the input changes
-                                                                            setState(() {});
-                                                                          },
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    actions: [
-                                                                      TextButton(
-                                                                        onPressed: () {
-                                                                          Navigator.of(context).pop();
-                                                                        },
-                                                                        child: Text(getTranslatedValue(context, cancelLabel)),
-                                                                      ),
-                                                                      ElevatedButton(
-                                                                        onPressed: editTextController.text.length == 6
-                                                                            ? () {
-                                                                                if (editTextController.text == order.otp.toString()) {
-                                                                                  params[ApiAndParams.orderId] = order.id.toString();
-                                                                                  params[ApiAndParams.statusId] =
-                                                                                      DeliveryBoyOrdersProvider.selectedOrderStatus.toString();
-                                                                                  params[ApiAndParams.deliveryBoyId] = order.deliveryBoyId.toString();
-                                                                                  DeliveryBoyOrdersProvider.updateOrdersStatus(
-                                                                                    params: params,
-                                                                                    context: context,
-                                                                                  ).then(
-                                                                                    (value) {
-                                                                                      Navigator.pop(context, value);
-                                                                                      callApi(reset: true, silentLoading: true);
-                                                                                    },
-                                                                                  );
-                                                                                } else {
-                                                                                  showMessage(
-                                                                                    context,
-                                                                                    getTranslatedValue(context, invalidOtpLabel),
-                                                                                    MessageType.warning,
-                                                                                  );
-                                                                                }
-                                                                              }
-                                                                            : null,
-                                                                        child: Text(getTranslatedValue(context, submitLabel)),
-                                                                      ),
-                                                                    ],
-                                                                  );
-                                                                },
-                                                              );
-                                                            },
-                                                          ).then(
-                                                            (value) => Navigator.pop(context, value),
-                                                          );
-                                                        } else {
-                                                          params[ApiAndParams.orderId] = order.orderId.toString();
-                                                          params[ApiAndParams.statusId] = DeliveryBoyOrdersProvider.selectedOrderStatus.toString();
-                                                          params[ApiAndParams.deliveryBoyId] = order.deliveryBoyId.toString();
-                                                          DeliveryBoyOrdersProvider.updateOrdersStatus(
-                                                            params: params,
-                                                            context: context,
-                                                          ).then(
-                                                            (value) => Navigator.pop(context, value),
-                                                          );
-                                                        }
-                                                      },
+                                                         if (DeliveryBoyOrdersProvider.selectedOrderStatus.toString() == "6") {
+                                                           showDialog(
+                                                             context: context,
+                                                             barrierDismissible: false,
+                                                             builder: (BuildContext dialogContext) {
+                                                               return DeliveryProofDialog(
+                                                                 orderId: (order.id ?? order.orderId).toString(),
+                                                                 deliveryBoyId: order.deliveryBoyId.toString(),
+                                                                 statusId: "6",
+                                                                 otp: order.otp?.toString(),
+                                                               );
+                                                             },
+                                                           ).then((value) {
+                                                             if (value == true) {
+                                                               Navigator.pop(context, value);
+                                                               callApi(reset: true, silentLoading: true);
+                                                             }
+                                                           });
+                                                         } else {
+                                                           Map<String, String> params = {};
+                                                           params[ApiAndParams.orderId] = (order.id ?? order.orderId).toString();
+                                                           params[ApiAndParams.statusId] = DeliveryBoyOrdersProvider.selectedOrderStatus.toString();
+                                                           params[ApiAndParams.deliveryBoyId] = order.deliveryBoyId.toString();
+                                                           DeliveryBoyOrdersProvider.updateOrdersStatus(
+                                                             params: params,
+                                                             context: context,
+                                                           ).then((value) {
+                                                             Navigator.pop(context, value);
+                                                             callApi(reset: true, silentLoading: true);
+                                                           });
+                                                         }
+                                                       },
                                                       otherWidgets: Container(
                                                         child: (DeliveryBoyOrdersProvider.ordersStatusState == OrderUpdateStatusState.loaded)
                                                             ? CustomTextLabel(
