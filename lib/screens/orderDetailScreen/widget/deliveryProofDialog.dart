@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:project/helper/utils/generalImports.dart';
 
 class DeliveryProofDialog extends StatefulWidget {
@@ -24,6 +25,7 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
   final List<File> _selectedImages = [];
   final TextEditingController _otpController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final ImagePicker _imagePicker = ImagePicker();
   bool _isSubmitting = false;
 
   bool get _isOtpRequired =>
@@ -38,7 +40,7 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
     super.dispose();
   }
 
-  Future<void> _pickImages() async {
+  Future<void> _captureFromCamera() async {
     if (_selectedImages.length >= 3) {
       showMessage(
         context,
@@ -48,34 +50,196 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
       return;
     }
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
-        allowMultiple: true,
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 80,
+        maxWidth: 1920,
+        maxHeight: 1920,
       );
-      if (result != null && result.paths.isNotEmpty) {
-        List<File> newFiles = [];
-        for (String? path in result.paths) {
-          if (path != null && path.isNotEmpty) {
-            newFiles.add(File(path));
-          }
-        }
+      if (photo != null && photo.path.isNotEmpty) {
+        setState(() {
+          _selectedImages.add(File(photo.path));
+        });
+      }
+    } catch (e) {
+      showMessage(context, e.toString(), MessageType.error);
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    if (_selectedImages.length >= 3) {
+      showMessage(
+        context,
+        getTranslatedValue(context, max3ImagesAllowedLabel),
+        MessageType.warning,
+      );
+      return;
+    }
+    try {
+      final List<XFile> photos = await _imagePicker.pickMultiImage(
+        imageQuality: 80,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
+      if (photos.isNotEmpty) {
         int availableSlots = 3 - _selectedImages.length;
-        if (newFiles.length > availableSlots) {
+        List<File> newFiles = photos
+            .take(availableSlots)
+            .map((x) => File(x.path))
+            .toList();
+        if (photos.length > availableSlots) {
           showMessage(
             context,
             getTranslatedValue(context, max3ImagesAllowedLabel),
             MessageType.warning,
           );
-          newFiles = newFiles.sublist(0, availableSlots);
         }
         setState(() {
           _selectedImages.addAll(newFiles);
         });
       }
     } catch (e) {
-      showMessage(context, e.toString(), MessageType.error);
+      try {
+        FilePickerResult? result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+          allowMultiple: true,
+        );
+        if (result != null && result.paths.isNotEmpty) {
+          int availableSlots = 3 - _selectedImages.length;
+          List<File> newFiles = [];
+          for (String? path in result.paths) {
+            if (path != null && path.isNotEmpty) {
+              newFiles.add(File(path));
+            }
+          }
+          if (newFiles.length > availableSlots) {
+            showMessage(
+              context,
+              getTranslatedValue(context, max3ImagesAllowedLabel),
+              MessageType.warning,
+            );
+            newFiles = newFiles.sublist(0, availableSlots);
+          }
+          setState(() {
+            _selectedImages.addAll(newFiles);
+          });
+        }
+      } catch (_) {
+        showMessage(context, e.toString(), MessageType.error);
+      }
     }
+  }
+
+  void _showImageSourcePicker() {
+    if (_selectedImages.length >= 3) {
+      showMessage(
+        context,
+        getTranslatedValue(context, max3ImagesAllowedLabel),
+        MessageType.warning,
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: ColorsRes.grey.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                CustomTextLabel(
+                  jsonKey: selectImageSourceLabel,
+                  style: TextStyle(
+                    color: ColorsRes.mainTextColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSourceOption(
+                      icon: Icons.camera_alt_rounded,
+                      title: getTranslatedValue(context, captureImageLabel),
+                      color: ColorsRes.appColor,
+                      onTap: () {
+                        Navigator.pop(bottomSheetContext);
+                        _captureFromCamera();
+                      },
+                    ),
+                    _buildSourceOption(
+                      icon: Icons.photo_library_rounded,
+                      title: getTranslatedValue(context, chooseFromGalleryLabel),
+                      color: Colors.blueAccent,
+                      onTap: () {
+                        Navigator.pop(bottomSheetContext);
+                        _pickFromGallery();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSourceOption({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 30,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: ColorsRes.mainTextColor,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _removeImage(int index) {
@@ -129,7 +293,12 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
     }
 
     try {
-      final ordersProvider = context.read<OrderUpdateStatusProvider>();
+      OrderUpdateStatusProvider ordersProvider;
+      try {
+        ordersProvider = context.read<OrderUpdateStatusProvider>();
+      } catch (_) {
+        ordersProvider = OrderUpdateStatusProvider();
+      }
       var result = await ordersProvider.updateOrdersStatus(
         params: params,
         filesMap: filesMap,
@@ -155,6 +324,51 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
     }
   }
 
+  void _showPreview(File imageFile) {
+    showDialog(
+      context: context,
+      builder: (BuildContext previewContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: InteractiveViewer(
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(previewContext),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool canSubmit = _selectedImages.isNotEmpty &&
@@ -177,7 +391,7 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: ColorsRes.appColor.withOpacity(0.12),
+                      color: ColorsRes.appColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -255,7 +469,7 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: ColorsRes.grey.withOpacity(0.4)),
+                      borderSide: BorderSide(color: ColorsRes.grey.withValues(alpha: 0.4)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -267,7 +481,7 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
                 const SizedBox(height: 16),
               ],
 
-              // Images Section
+              // Images Section Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -282,7 +496,7 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
                   Text(
                     "${_selectedImages.length}/3",
                     style: TextStyle(
-                      color: _selectedImages.isEmpty ? ColorsRes.red : ColorsRes.appColor,
+                      color: _selectedImages.isEmpty ? ColorsRes.appColorRed : ColorsRes.appColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -299,95 +513,191 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
               ),
               const SizedBox(height: 12),
 
-              // Image Thumbnails & Add Button
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  ...List.generate(_selectedImages.length, (index) {
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
+              // Image Selector Options when empty
+              if (_selectedImages.isEmpty)
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _captureFromCamera,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
+                            color: ColorsRes.appColor.withValues(alpha: 0.07),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: ColorsRes.appColor.withOpacity(0.4),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(9),
-                            child: Image.file(
-                              _selectedImages[index],
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: -6,
-                          right: -6,
-                          child: GestureDetector(
-                            onTap: () => _removeImage(index),
-                            child: Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                size: 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                  if (_selectedImages.length < 3)
-                    GestureDetector(
-                      onTap: _pickImages,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: ColorsRes.appColor.withOpacity(0.06),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: ColorsRes.appColor,
-                            width: 1.2,
-                            style: BorderStyle.solid,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo_outlined,
                               color: ColorsRes.appColor,
-                              size: 26,
+                              width: 1.2,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "+ Add",
-                              style: TextStyle(
-                                color: ColorsRes.appColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: ColorsRes.appColor.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.camera_alt_rounded,
+                                  color: ColorsRes.appColor,
+                                  size: 26,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              Text(
+                                getTranslatedValue(context, captureImageLabel),
+                                style: TextStyle(
+                                  color: ColorsRes.mainTextColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                ],
-              ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _pickFromGallery,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent.withValues(alpha: 0.07),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.blueAccent.withValues(alpha: 0.6),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.blueAccent.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.photo_library_rounded,
+                                  color: Colors.blueAccent,
+                                  size: 26,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                getTranslatedValue(context, chooseFromGalleryLabel),
+                                style: TextStyle(
+                                  color: ColorsRes.mainTextColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+              // Image Thumbnails & Add More Button
+              if (_selectedImages.isNotEmpty)
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    ...List.generate(_selectedImages.length, (index) {
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _showPreview(_selectedImages[index]),
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: ColorsRes.appColor.withValues(alpha: 0.4),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(9),
+                                child: Image.file(
+                                  _selectedImages[index],
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: -6,
+                            right: -6,
+                            child: GestureDetector(
+                              onTap: () => _removeImage(index),
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                    if (_selectedImages.length < 3)
+                      GestureDetector(
+                        onTap: _showImageSourcePicker,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: ColorsRes.appColor.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: ColorsRes.appColor,
+                              width: 1.2,
+                              style: BorderStyle.solid,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_a_photo_outlined,
+                                color: ColorsRes.appColor,
+                                size: 24,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "+ Add",
+                                style: TextStyle(
+                                  color: ColorsRes.appColor,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               const SizedBox(height: 24),
 
               // Actions
@@ -400,7 +710,7 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        side: BorderSide(color: ColorsRes.grey.withOpacity(0.4)),
+                        side: BorderSide(color: ColorsRes.grey.withValues(alpha: 0.4)),
                       ),
                       onPressed: _isSubmitting
                           ? null
@@ -423,7 +733,7 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        disabledBackgroundColor: ColorsRes.grey.withOpacity(0.3),
+                        disabledBackgroundColor: ColorsRes.grey.withValues(alpha: 0.3),
                       ),
                       onPressed: canSubmit && !_isSubmitting ? _submit : null,
                       child: _isSubmitting

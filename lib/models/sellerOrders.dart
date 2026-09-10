@@ -94,6 +94,7 @@ class SellerOrdersListItem {
     this.orderStatus,
     this.cityId,
     this.orderStatusName,
+    this.otp,
   });
 
   late final String? id;
@@ -120,6 +121,7 @@ class SellerOrdersListItem {
   late final String? orderStatus;
   late final String? cityId;
   late final String? orderStatusName;
+  late final String? otp;
 
   SellerOrdersListItem.fromJson(Map<String, dynamic> json) {
     id = json['id'].toString();
@@ -146,13 +148,15 @@ class SellerOrdersListItem {
     orderStatus = json['order_status'].toString();
     cityId = json['city_id'].toString();
     orderStatusName = json['order_status_name']??"";
+    otp = json['otp']?.toString();
   }
 
   SellerOrdersListItem copyWith(
       {String? newDeliveryBoyId,
       String? newDeliveryBoyName,
       String? activeStatus,
-      String? orderStatusName}) {
+      String? orderStatusName,
+      String? otp}) {
     return SellerOrdersListItem(
       id: this.id,
       deliveryBoyId: newDeliveryBoyId ?? this.deliveryBoyId,
@@ -178,6 +182,7 @@ class SellerOrdersListItem {
       orderStatus: this.orderStatus,
       cityId: this.cityId,
       orderStatusName: orderStatusName ?? this.orderStatusName,
+      otp: otp ?? this.otp,
     );
   }
 
@@ -207,6 +212,7 @@ class SellerOrdersListItem {
     _data['order_status'] = orderStatus;
     _data['city_id'] = cityId;
     _data['order_status_name'] = orderStatusName;
+    _data['otp'] = otp;
     return _data;
   }
 }

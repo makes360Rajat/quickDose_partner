@@ -607,4 +607,7 @@ const String atLeastOneImageRequiredLabel = "at_least_one_image_required";
 const String max3ImagesAllowedLabel = "max_3_images_allowed";
 const String takePhotoOrSelectImageLabel = "take_photo_or_select_image";
 const String deliveredItemsProofLabel = "delivered_items_proof";
+const String selectImageSourceLabel = "select_image_source";
+const String captureImageLabel = "capture_image";
+const String chooseFromGalleryLabel = "choose_from_gallery";
 

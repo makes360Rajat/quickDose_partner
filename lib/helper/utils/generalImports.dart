@@ -68,6 +68,8 @@ export 'package:project/provider/orderDetailProvider.dart';
 export 'package:project/provider/sellerOrdersProvider.dart';
 export 'package:project/provider/deliveryBoyOrdersProvider.dart';
 export 'package:project/provider/ordersStatusUpdateProvider.dart';
+export 'package:project/provider/pickupOrdersStatusUpdateProvider.dart';
+export 'package:project/provider/returnOrdersStatusUpdateProvider.dart';
 export 'package:project/provider/cancelOrderItemProvider.dart';
 export 'package:project/provider/productBulkOperationsProvider.dart';
 export 'package:project/provider/productListProvider.dart';

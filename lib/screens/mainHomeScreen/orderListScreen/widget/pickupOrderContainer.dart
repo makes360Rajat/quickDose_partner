@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:project/helper/utils/generalImports.dart';
-import 'package:project/provider/pickupOrdersStatusUpdateProvider.dart';
 
 class PickupOrderContainer extends StatelessWidget {
   final SellerOrdersListItem order;

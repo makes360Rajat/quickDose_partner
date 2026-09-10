@@ -600,5 +600,8 @@
   "at_least_one_image_required": "Please attach at least 1 image of the delivered items.",
   "max_3_images_allowed": "Maximum 3 images allowed",
   "take_photo_or_select_image": "Take Photo / Choose Image",
-  "delivered_items_proof": "Delivered Items Proof"
+  "delivered_items_proof": "Delivered Items Proof",
+  "select_image_source": "Select Image Source",
+  "capture_image": "Take Photo",
+  "choose_from_gallery": "Choose from Gallery"
 }

@@ -71,6 +71,7 @@ dependencies:
   dio: ^5.8.0+1
   pinput: ^6.0.1
   dio_curl_interceptor: ^3.3.3
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4

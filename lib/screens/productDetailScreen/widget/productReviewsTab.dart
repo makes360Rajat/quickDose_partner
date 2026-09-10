@@ -257,43 +257,6 @@ class _ProductReviewsTabState extends State<ProductReviewsTab> {
     );
   }
 
-  Widget _buildSearchBar(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-              style: TextStyle(color: ColorsRes.mainTextColor),
-              decoration: InputDecoration(
-                hintText: getTranslatedValue(context, searchReviewsLabel),
-                hintStyle: TextStyle(fontSize: 13, color: ColorsRes.subTitleTextColor),
-                prefixIcon: Icon(Icons.search, color: ColorsRes.subTitleTextColor),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(Icons.tune, color: ColorsRes.subTitleTextColor),
-        ),
-      ],
-    );
-  }
-
   Widget _buildReviewsList(BuildContext context, List<ProductRatingList> reviews) {
     return Container(
       padding: const EdgeInsets.all(14),

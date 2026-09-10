@@ -108,6 +108,21 @@ Future<void> main() async {
             return LogoutProvider();
           },
         ),
+        ChangeNotifierProvider<OrderUpdateStatusProvider>(
+          create: (context) {
+            return OrderUpdateStatusProvider();
+          },
+        ),
+        ChangeNotifierProvider<ReturnOrderUpdateStatusProvider>(
+          create: (context) {
+            return ReturnOrderUpdateStatusProvider();
+          },
+        ),
+        ChangeNotifierProvider<PickupOrderUpdateStatusProvider>(
+          create: (context) {
+            return PickupOrderUpdateStatusProvider();
+          },
+        ),
       ],
       child: MyApp(),
     ),

@@ -54,6 +54,8 @@
 	<string>User requires access to the location to fetch near by products from the various sellers to make user experience better and get proper deliverable items to belong in your selected location.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>User requires access to the search the items or products to make user experience better and get proper results.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to the camera to capture proof of delivery photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app provides a facility to change the profile picture for the users so it requires permission to access images to upload and set the profile picture into your account.</string>
 	<key>NSUserNotificationsUsageDescription</key>
