@@ -95,6 +95,7 @@ class SellerOrdersListItem {
     this.cityId,
     this.orderStatusName,
     this.otp,
+    this.deliveryProofImages,
   });
 
   late final String? id;
@@ -122,6 +123,7 @@ class SellerOrdersListItem {
   late final String? cityId;
   late final String? orderStatusName;
   late final String? otp;
+  late final List<String>? deliveryProofImages;
 
   SellerOrdersListItem.fromJson(Map<String, dynamic> json) {
     id = json['id'].toString();
@@ -149,6 +151,44 @@ class SellerOrdersListItem {
     cityId = json['city_id'].toString();
     orderStatusName = json['order_status_name']??"";
     otp = json['otp']?.toString();
+
+    dynamic rawDeliveryImgs = json['delivery_proof_images'] ?? json['delivery_images'];
+    if (rawDeliveryImgs != null) {
+      if (rawDeliveryImgs is String && rawDeliveryImgs.trim().isNotEmpty) {
+        try {
+          rawDeliveryImgs = jsonDecode(rawDeliveryImgs);
+        } catch (_) {
+          if (rawDeliveryImgs.contains(',')) {
+            rawDeliveryImgs = rawDeliveryImgs.split(',').map((e) => e.trim()).toList();
+          } else {
+            rawDeliveryImgs = [rawDeliveryImgs];
+          }
+        }
+      }
+      if (rawDeliveryImgs is String && rawDeliveryImgs.trim().isNotEmpty) {
+        try {
+          rawDeliveryImgs = jsonDecode(rawDeliveryImgs);
+        } catch (_) {}
+      }
+      if (rawDeliveryImgs is List) {
+        deliveryProofImages = rawDeliveryImgs.map((x) {
+          String url = x.toString().trim();
+          if (url.isEmpty || url == "null") return '';
+          if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+          }
+          String cleanPath = url.startsWith('/') ? url.substring(1) : url;
+          if (cleanPath.startsWith('storage/')) {
+            return "${Constant.hostUrl}$cleanPath";
+          }
+          return "${Constant.hostUrl}storage/$cleanPath";
+        }).where((url) => url.isNotEmpty).toList();
+      } else {
+        deliveryProofImages = [];
+      }
+    } else {
+      deliveryProofImages = [];
+    }
   }
 
   SellerOrdersListItem copyWith(
@@ -156,7 +196,8 @@ class SellerOrdersListItem {
       String? newDeliveryBoyName,
       String? activeStatus,
       String? orderStatusName,
-      String? otp}) {
+      String? otp,
+      List<String>? deliveryProofImages}) {
     return SellerOrdersListItem(
       id: this.id,
       deliveryBoyId: newDeliveryBoyId ?? this.deliveryBoyId,
@@ -183,6 +224,7 @@ class SellerOrdersListItem {
       cityId: this.cityId,
       orderStatusName: orderStatusName ?? this.orderStatusName,
       otp: otp ?? this.otp,
+      deliveryProofImages: deliveryProofImages ?? this.deliveryProofImages,
     );
   }
 
@@ -213,6 +255,7 @@ class SellerOrdersListItem {
     _data['city_id'] = cityId;
     _data['order_status_name'] = orderStatusName;
     _data['otp'] = otp;
+    _data['delivery_proof_images'] = deliveryProofImages;
     return _data;
   }
 }

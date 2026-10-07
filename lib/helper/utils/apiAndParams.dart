@@ -9,6 +9,11 @@ class ApiAndParams {
   static String apiMainCategories = "main_categories";
   static String apiDeliveryBoys = "delivery_boys";
   static String apiManageDeliveryBoysLatLong = "manage_live_tracking";
+  static String apiDeliveryBoyShiftToggle = "shift/toggle";
+  static String apiDeliveryBoyLocationPush = "location/push";
+  static String apiDeliveryBoyShiftStats = "shift/stats";
+  static String apiDeliveryBoyPublicShiftToggle = "${Constant.hostUrl}api/delivery_boy/public/shift/toggle";
+  static String apiDeliveryBoyPublicLocationPush = "${Constant.hostUrl}api/delivery_boy/public/location/push";
   static String apiAppSettings = "settings";
   static String apiOrdersHistory = "orders";
   static String apiOrderStatuses = "order_statuses";
@@ -256,4 +261,14 @@ class ApiAndParams {
   static String cancelOrderItem = "cancel_order_item";
   static String orderItemId = "order_item_id";
   static String salaries = "salaries";
+
+  // Delivery boy live road tracking params
+  static String speed = "speed";
+  static String heading = "heading";
+  static String accuracy = "accuracy";
+  static String batteryLevel = "battery_level";
+  static String deviceId = "device_id";
+  static String deviceModel = "device_model";
+  static String appVersion = "app_version";
+  static String activityType = "activity_type";
 }

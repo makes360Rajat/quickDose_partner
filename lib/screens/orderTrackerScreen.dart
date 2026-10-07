@@ -85,9 +85,10 @@ class _OrderTrackerScreenState extends State<OrderTrackerScreen> {
       callApi();
     });
   } */
- @override
+  @override
   void initState() {
     super.initState();
+    DeliveryBoyTrackingService.instance.setActiveOrder(widget.orderId);
     locationData();
   }
 
@@ -148,7 +149,7 @@ class _OrderTrackerScreenState extends State<OrderTrackerScreen> {
         }
       });
 
-      // Sync updated lat/long with backend server
+      // Sync updated lat/long with backend server (Order Live Tracking for customer)
       context.read<LiveOrderTrackingProvider>().updateDeliveryBoyLatLongProvider(
         params: {
           ApiAndParams.orderStatus: "5",
@@ -157,6 +158,13 @@ class _OrderTrackerScreenState extends State<OrderTrackerScreen> {
           ApiAndParams.longitude: currentPosition.longitude.toString(),
         },
         context: context,
+      );
+
+      // Sync real-time location ping directly to Admin Tracking Dashboard
+      DeliveryBoyTrackingService.instance.pushLocationPing(
+        position: position,
+        activeOrderId: widget.orderId,
+        activityType: 'delivering',
       );
     } catch (e) {
       debugPrint("Error getting delivery boy location: $e");
@@ -634,6 +642,7 @@ class _OrderTrackerScreenState extends State<OrderTrackerScreen> {
 
   @override
   void dispose() {
+    DeliveryBoyTrackingService.instance.clearActiveOrder();
     timer?.cancel();
     super.dispose();
   }

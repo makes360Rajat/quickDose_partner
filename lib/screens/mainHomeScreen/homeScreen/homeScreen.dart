@@ -193,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           child: Row(
-                            mainAxisSize: .min,
+                            mainAxisSize: MainAxisSize.min,
                             children: List.generate(
                               lblSellerStatusDisplayNames.length,
                               (index) {
@@ -204,7 +204,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         context,
                                         getTranslatedValue(
                                           context,
-                                          // "seller_already_${index == 0 ? "active" : "inactive"}_message",
                                           index == 0 ? sellerAlreadyActiveMessageLabel : sellerAlreadyInactiveMessageLabel,
                                         ),
                                         MessageType.warning,
@@ -277,6 +276,66 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       }
+                    },
+                  ),
+                ),
+              if (!Constant.session.isSeller() && Constant.session.isDeliveryBoy())
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 15),
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: DeliveryBoyTrackingService.instance.isOnDutyNotifier,
+                    builder: (context, isOnDuty, child) {
+                      return GestureDetector(
+                        onTap: () async {
+                          final bool newStatus = !isOnDuty;
+                          final bool success = newStatus
+                              ? await DeliveryBoyTrackingService.instance.startShift()
+                              : await DeliveryBoyTrackingService.instance.endShift();
+                          if (mounted) {
+                            showMessage(
+                              context,
+                              success
+                                  ? (newStatus ? "You are now ON DUTY (Live Tracking active for Admin)" : "You are now OFF DUTY")
+                                  : "Could not update duty status. Please check GPS permissions.",
+                              success ? MessageType.success : MessageType.warning,
+                            );
+                          }
+                        },
+                        child: Container(
+                          height: 32,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isOnDuty ? ColorsRes.appColor.withOpacity(0.12) : Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: isOnDuty ? ColorsRes.appColor : ColorsRes.grey,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isOnDuty ? ColorsRes.appColor : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isOnDuty ? "ON DUTY" : "OFF DUTY",
+                                style: TextStyle(
+                                  color: isOnDuty ? ColorsRes.appColor : ColorsRes.subTitleTextColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -456,6 +515,58 @@ class _HomeScreenState extends State<HomeScreen> {
                     controller: scrollController,
                     child: Column(
                       children: [
+                        ValueListenableBuilder<bool>(
+                          valueListenable: DeliveryBoyTrackingService.instance.isOnDutyNotifier,
+                          builder: (context, isOnDuty, _) {
+                            return Container(
+                              margin: const EdgeInsetsDirectional.fromSTEB(10, 10, 10, 0),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isOnDuty ? ColorsRes.appColor.withOpacity(0.08) : Colors.orange.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isOnDuty ? ColorsRes.appColor : Colors.orange,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isOnDuty ? Icons.radar_rounded : Icons.location_off_outlined,
+                                    color: isOnDuty ? ColorsRes.appColor : Colors.orange,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          isOnDuty ? "Live Admin Tracking Connected" : "Tracking Paused (Off Duty)",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: isOnDuty ? ColorsRes.appColor : Colors.orange.shade800,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          isOnDuty
+                                              ? "Broadcasting real-time road GPS coordinates to Admin"
+                                              : "Tap 'ON DUTY' in the top bar to start live tracking shift",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: ColorsRes.subTitleTextColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                         GridView.count(
                           childAspectRatio: 1,
                           shrinkWrap: true,

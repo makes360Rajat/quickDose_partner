@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:project/helper/utils/constant.dart';
+
 class DeliveryBoyOrder {
   DeliveryBoyOrder({
     this.status,
@@ -112,6 +115,7 @@ class DeliveryBoyOrdersListItem {
     this.userMobile,
     this.orderStatus,
     this.orderStatusName,
+    this.deliveryProofImages,
   });
 
   late final String? id;
@@ -140,6 +144,7 @@ class DeliveryBoyOrdersListItem {
   late final String? userMobile;
   late final String? orderStatus;
   late final String? orderStatusName;
+  late final List<String>? deliveryProofImages;
 
   DeliveryBoyOrdersListItem.fromJson(Map<String, dynamic> json) {
     id = json['id'].toString();
@@ -168,6 +173,44 @@ class DeliveryBoyOrdersListItem {
     otp = json['otp'].toString();
     pincodeId = json['pincode_id'].toString();
     orderStatusName = json['order_status_name'].toString();
+
+    dynamic rawDeliveryImgs = json['delivery_proof_images'] ?? json['delivery_images'];
+    if (rawDeliveryImgs != null) {
+      if (rawDeliveryImgs is String && rawDeliveryImgs.trim().isNotEmpty) {
+        try {
+          rawDeliveryImgs = jsonDecode(rawDeliveryImgs);
+        } catch (_) {
+          if (rawDeliveryImgs.contains(',')) {
+            rawDeliveryImgs = rawDeliveryImgs.split(',').map((e) => e.trim()).toList();
+          } else {
+            rawDeliveryImgs = [rawDeliveryImgs];
+          }
+        }
+      }
+      if (rawDeliveryImgs is String && rawDeliveryImgs.trim().isNotEmpty) {
+        try {
+          rawDeliveryImgs = jsonDecode(rawDeliveryImgs);
+        } catch (_) {}
+      }
+      if (rawDeliveryImgs is List) {
+        deliveryProofImages = rawDeliveryImgs.map((x) {
+          String url = x.toString().trim();
+          if (url.isEmpty || url == "null") return '';
+          if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+          }
+          String cleanPath = url.startsWith('/') ? url.substring(1) : url;
+          if (cleanPath.startsWith('storage/')) {
+            return "${Constant.hostUrl}$cleanPath";
+          }
+          return "${Constant.hostUrl}storage/$cleanPath";
+        }).where((url) => url.isNotEmpty).toList();
+      } else {
+        deliveryProofImages = [];
+      }
+    } else {
+      deliveryProofImages = [];
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -198,6 +241,7 @@ class DeliveryBoyOrdersListItem {
     _data['user_mobile'] = userMobile;
     _data['order_status'] = orderStatus;
     _data['order_status_name'] = orderStatusName;
+    _data['delivery_proof_images'] = deliveryProofImages;
     return _data;
   }
 }

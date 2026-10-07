@@ -106,6 +106,8 @@ class SessionManager extends ChangeNotifier {
   static String password = "password";
 
   static String keyCurrency = "currency";
+  static String keyDeviceId = "device_id";
+  static String keyIsOnDuty = "is_on_duty";
 
   late SharedPreferences prefs;
 
@@ -119,6 +121,10 @@ class SessionManager extends ChangeNotifier {
 
   bool isSeller() {
     return getData(keyUserType) == "seller";
+  }
+
+  bool isDeliveryBoy() {
+    return isUserLoggedIn() && !isSeller();
   }
 
   void setData(String id, String val, bool isRefresh) {
@@ -249,6 +255,12 @@ class SessionManager extends ChangeNotifier {
   void processToLogout(BuildContext buildContext) {
     if (_isLoggingOut) return;
     _isLoggingOut = true;
+
+    try {
+      if (isDeliveryBoy()) {
+        DeliveryBoyTrackingService.instance.endShift();
+      }
+    } catch (_) {}
 
     buildContext.read<LogoutProvider>().logoutApiProvider(context: buildContext).then((_) {
       _doLogout(buildContext);

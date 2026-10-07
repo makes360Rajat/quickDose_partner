@@ -26,6 +26,10 @@ class _HomeMainScreenState extends State<MainHomeScreen> {
       context.read<HomeMainScreenProvider>().setPages(selectBottomMenu);
 
       if (Constant.session.isUserLoggedIn()) {
+        // Initialize Delivery Boy Live GPS Tracking for Admin if logged in as delivery boy
+        if (Constant.session.isDeliveryBoy()) {
+          DeliveryBoyTrackingService.instance.init();
+        }
         try {
           final String sessionFcmToken = Constant.session.getData(SessionManager.keyFCMToken);
           if (sessionFcmToken.isEmpty) {

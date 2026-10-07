@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:project/helper/utils/constant.dart';
 import 'package:project/models/additionalCharges.dart';
 
 class OrderDetail {
@@ -327,11 +329,41 @@ class Order {
     additionalCharges = (json['additional_charges'] != null && json['additional_charges'] is List)
         ? List<AdditionalCharges>.from(json['additional_charges'].map((x) => AdditionalCharges.fromJson(x)))
         : [];
-    orderStatusName = json['order_status_name']??"";
-    if (json['delivery_proof_images'] != null && json['delivery_proof_images'] is List) {
-      deliveryProofImages = List<String>.from(json['delivery_proof_images'].map((x) => x.toString()));
-    } else if (json['delivery_images'] != null && json['delivery_images'] is List) {
-      deliveryProofImages = List<String>.from(json['delivery_images'].map((x) => x.toString()));
+    orderStatusName = json['order_status_name'] ?? "";
+    dynamic rawDeliveryImgs = json['delivery_proof_images'] ?? json['delivery_images'];
+    if (rawDeliveryImgs != null) {
+      if (rawDeliveryImgs is String && rawDeliveryImgs.trim().isNotEmpty) {
+        try {
+          rawDeliveryImgs = jsonDecode(rawDeliveryImgs);
+        } catch (_) {
+          if (rawDeliveryImgs.contains(',')) {
+            rawDeliveryImgs = rawDeliveryImgs.split(',').map((e) => e.trim()).toList();
+          } else {
+            rawDeliveryImgs = [rawDeliveryImgs];
+          }
+        }
+      }
+      if (rawDeliveryImgs is String && rawDeliveryImgs.trim().isNotEmpty) {
+        try {
+          rawDeliveryImgs = jsonDecode(rawDeliveryImgs);
+        } catch (_) {}
+      }
+      if (rawDeliveryImgs is List) {
+        deliveryProofImages = rawDeliveryImgs.map((x) {
+          String url = x.toString().trim();
+          if (url.isEmpty || url == "null") return '';
+          if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+          }
+          String cleanPath = url.startsWith('/') ? url.substring(1) : url;
+          if (cleanPath.startsWith('storage/')) {
+            return "${Constant.hostUrl}$cleanPath";
+          }
+          return "${Constant.hostUrl}storage/$cleanPath";
+        }).where((url) => url.isNotEmpty).toList();
+      } else {
+        deliveryProofImages = [];
+      }
     } else {
       deliveryProofImages = [];
     }
