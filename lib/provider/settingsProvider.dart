@@ -8,62 +8,66 @@ class SettingsProvider extends ChangeNotifier {
       Map<String, dynamic> settingsApiResponses =
           await getAppSettingsRepository(params: params);
 
+      if (settingsApiResponses.isEmpty ||
+          settingsApiResponses[ApiAndParams.data] == null ||
+          settingsApiResponses[ApiAndParams.status]?.toString() != "1") {
+        if (settingsApiResponses[ApiAndParams.message] != null) {
+          showMessage(context, settingsApiResponses[ApiAndParams.message].toString(),
+              MessageType.warning);
+        }
+        return false;
+      }
+
       List<int> decodedBytes = base64.decode(settingsApiResponses[ApiAndParams.data].toString());
 
       String decodedString = utf8.decode(decodedBytes);
       Map<String, dynamic> settingsApiResponse = json.decode(decodedString);
           
-      if (settingsApiResponses[ApiAndParams.status].toString() == "1") {
-        if (Constant.session.isUserLoggedIn() && Constant.session.isSeller()) {
-          AppSettingsSellerData appSettings =
-              AppSettingsSellerData.fromJson(settingsApiResponse);
-          Constant.currency = appSettings.currency ?? "";
-          Constant.currencyCode = appSettings.currencyCode ?? "";
-          Constant.sellerCommission = appSettings.sellerCommission ?? "";
-          Constant.privacyPolicy = appSettings.privacyPolicySeller ?? "";
-          Constant.termsConditions =
-              appSettings.termsConditionsSeller ?? "";
-          Constant.currencyDecimalPoint = appSettings.decimalPoint ?? "";
-          Constant.appMaintenanceMode = appSettings.appModeSeller ?? "";
-          Constant.appMaintenanceModeRemark =
-              appSettings.appModeSellerRemark ?? "";
-          // Constant.googleApiKey = /* appSettings.googlePlaceApiKey */appSettings.apiKey ?? "";
-          Constant.viewCustomerDetail =
-              appSettings.viewCustomerDetail ?? "0";
-          Constant.demoMode = appSettings.demoMode ?? "";
-          Constant.selfPickupMode = appSettings.selfPickupMode ?? "0";
-          return true;
-        } else {
-          AppSettingsDeliveryBoyData appSettings =
-              AppSettingsDeliveryBoyData.fromJson(settingsApiResponse);
-          Constant.currency = appSettings.currency ?? "";
-          Constant.currencyCode = appSettings.currencyCode ?? "";
-          Constant.currencyCode = appSettings.currencyCode ?? "";
-          Constant.privacyPolicy =
-              appSettings.privacyPolicyDeliveryBoy ?? "";
-          Constant.termsConditions =
-              appSettings.termsConditionsDeliveryBoy ?? "";
-          Constant.currencyDecimalPoint = appSettings.decimalPoint ?? "";
-          Constant.appMaintenanceMode =
-              appSettings.appModeDeliveryBoy ?? "";
-          Constant.appMaintenanceModeRemark =
-              appSettings.appModeDeliveryBoyRemark ?? "";
-          if (appSettings.googlePlaceApiKey != null &&
-              appSettings.googlePlaceApiKey!.trim().startsWith("AIzaSy")) {
-            Constant.googleApiKey = appSettings.googlePlaceApiKey!.trim();
-          } else if (appSettings.apiKey != null &&
-              appSettings.apiKey!.trim().startsWith("AIzaSy")) {
-            Constant.googleApiKey = appSettings.apiKey!.trim();
-          } else {
-            Constant.googleApiKey = "AIzaSyBQQZL_AlzJuK7Qy1EOx82-5i9-rLT6bNk";
-          }
-          Constant.enableRoadPathTracking = appSettings.enableRoadPathTracking ?? "0";
-          return true;
-        }
+      if (Constant.session.isUserLoggedIn() && Constant.session.isSeller()) {
+        AppSettingsSellerData appSettings =
+            AppSettingsSellerData.fromJson(settingsApiResponse);
+        Constant.currency = appSettings.currency ?? "";
+        Constant.currencyCode = appSettings.currencyCode ?? "";
+        Constant.sellerCommission = appSettings.sellerCommission ?? "";
+        Constant.privacyPolicy = appSettings.privacyPolicySeller ?? "";
+        Constant.termsConditions =
+            appSettings.termsConditionsSeller ?? "";
+        Constant.currencyDecimalPoint = appSettings.decimalPoint ?? "";
+        Constant.appMaintenanceMode = appSettings.appModeSeller ?? "";
+        Constant.appMaintenanceModeRemark =
+            appSettings.appModeSellerRemark ?? "";
+        // Constant.googleApiKey = /* appSettings.googlePlaceApiKey */appSettings.apiKey ?? "";
+        Constant.viewCustomerDetail =
+            appSettings.viewCustomerDetail ?? "0";
+        Constant.demoMode = appSettings.demoMode ?? "";
+        Constant.selfPickupMode = appSettings.selfPickupMode ?? "0";
+        return true;
       } else {
-        showMessage(context, settingsApiResponse[ApiAndParams.message],
-            MessageType.warning);
-        return false;
+        AppSettingsDeliveryBoyData appSettings =
+            AppSettingsDeliveryBoyData.fromJson(settingsApiResponse);
+        Constant.currency = appSettings.currency ?? "";
+        Constant.currencyCode = appSettings.currencyCode ?? "";
+        Constant.currencyCode = appSettings.currencyCode ?? "";
+        Constant.privacyPolicy =
+            appSettings.privacyPolicyDeliveryBoy ?? "";
+        Constant.termsConditions =
+            appSettings.termsConditionsDeliveryBoy ?? "";
+        Constant.currencyDecimalPoint = appSettings.decimalPoint ?? "";
+        Constant.appMaintenanceMode =
+            appSettings.appModeDeliveryBoy ?? "";
+        Constant.appMaintenanceModeRemark =
+            appSettings.appModeDeliveryBoyRemark ?? "";
+        if (appSettings.googlePlaceApiKey != null &&
+            appSettings.googlePlaceApiKey!.trim().startsWith("AIzaSy")) {
+          Constant.googleApiKey = appSettings.googlePlaceApiKey!.trim();
+        } else if (appSettings.apiKey != null &&
+            appSettings.apiKey!.trim().startsWith("AIzaSy")) {
+          Constant.googleApiKey = appSettings.apiKey!.trim();
+        } else {
+          Constant.googleApiKey = "AIzaSyBQQZL_AlzJuK7Qy1EOx82-5i9-rLT6bNk";
+        }
+        Constant.enableRoadPathTracking = appSettings.enableRoadPathTracking ?? "0";
+        return true;
       }
     }catch (e) {
       showMessage(context, e.toString(), MessageType.error);
