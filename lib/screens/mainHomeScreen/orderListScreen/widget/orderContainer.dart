@@ -542,7 +542,8 @@ class OrderContainer extends StatelessWidget {
                                               onTap: () {
                                                 ordersProvider
                                                     .setSelectedStatus(
-                                                        index.toString());
+                                                        index.toString(),
+                                                        context: context);
                                               },
                                               child: Container(
                                                 child: Row(
@@ -573,7 +574,8 @@ class OrderContainer extends StatelessWidget {
                                                         ordersProvider
                                                             .setSelectedStatus(
                                                                 index
-                                                                    .toString());
+                                                                    .toString(),
+                                                                context: context);
                                                       },
                                                     ),
                                                   ],

@@ -9,6 +9,20 @@ import 'package:project/helper/utils/constant.dart';
 import 'package:project/helper/sessionManager.dart';
 import 'package:project/repositories/deliveryBoyTrackingApi.dart';
 
+class ShiftToggleResult {
+  final bool success;
+  final String message;
+  final bool hasActiveOrders;
+  final List<dynamic> activeOrderIds;
+
+  ShiftToggleResult({
+    required this.success,
+    required this.message,
+    this.hasActiveOrders = false,
+    this.activeOrderIds = const [],
+  });
+}
+
 class DeliveryBoyTrackingService extends ChangeNotifier {
   static final DeliveryBoyTrackingService instance = DeliveryBoyTrackingService._internal();
 
@@ -25,6 +39,7 @@ class DeliveryBoyTrackingService extends ChangeNotifier {
   double _currentSpeed = 0.0;
   DateTime? _lastPingTime;
   Position? _lastPosition;
+  String? lastShiftErrorMessage;
 
   bool get isOnDuty => _isOnDuty;
   bool get isPinging => _isPinging;
@@ -95,6 +110,12 @@ class DeliveryBoyTrackingService extends ChangeNotifier {
 
   /// Start Shift / Go On Duty (notifies Admin live map)
   Future<bool> startShift({bool silent = false}) async {
+    // Immediately set duty to ON so UI updates without delay
+    _isOnDuty = true;
+    isOnDutyNotifier.value = true;
+    Constant.session.setBoolData(SessionManager.keyIsOnDuty, true, false);
+    notifyListeners();
+
     await _initDeviceInfo();
 
     try {
@@ -103,6 +124,10 @@ class DeliveryBoyTrackingService extends ChangeNotifier {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
           debugPrint('[DeliveryBoyTracker] Location permission denied.');
+          _isOnDuty = false;
+          isOnDutyNotifier.value = false;
+          Constant.session.setBoolData(SessionManager.keyIsOnDuty, false, false);
+          notifyListeners();
           return false;
         }
       }
@@ -154,9 +179,7 @@ class DeliveryBoyTrackingService extends ChangeNotifier {
   }
 
   /// End Shift / Go Off Duty (notifies Admin live map)
-  Future<bool> endShift() async {
-    _stopTrackingTimer();
-
+  Future<ShiftToggleResult> endShift() async {
     Position? position;
     try {
       position = await Geolocator.getLastKnownPosition();
@@ -170,15 +193,44 @@ class DeliveryBoyTrackingService extends ChangeNotifier {
       'delivery_boy_id': Constant.session.getData(SessionManager.userId),
     };
 
-    await toggleDeliveryBoyShiftApi(params: params);
+    final Map<String, dynamic> response = await toggleDeliveryBoyShiftApi(params: params);
+    final statusVal = response[ApiAndParams.status]?.toString();
+    final bool isSuccess = statusVal == "1" || statusVal == "true" || response['status'] == true || response['status'] == 1;
+
+    if (!isSuccess) {
+      final String msg = response[ApiAndParams.message]?.toString() ??
+          response['message']?.toString() ??
+          "You cannot go OFF DUTY while you have active orders in progress.";
+      final data = response['data'] is Map ? response['data'] : {};
+      final bool hasActive = data['has_active_orders'] == true || data['can_go_off_duty'] == false;
+      final List<dynamic> orderIds = data['active_order_ids'] is List ? data['active_order_ids'] : [];
+
+      lastShiftErrorMessage = msg;
+      debugPrint('[DeliveryBoyTracker] Shift end rejected by backend: $msg');
+
+      // Keep tracking active! Do not cancel tracking timer or change duty state
+      return ShiftToggleResult(
+        success: false,
+        message: msg,
+        hasActiveOrders: hasActive || msg.toLowerCase().contains('order'),
+        activeOrderIds: orderIds,
+      );
+    }
+
+    _stopTrackingTimer();
     debugPrint('[DeliveryBoyTracker] Shift ended.');
 
     _isOnDuty = false;
     isOnDutyNotifier.value = false;
     _currentOrderId = null;
+    lastShiftErrorMessage = null;
     Constant.session.setBoolData(SessionManager.keyIsOnDuty, false, false);
     notifyListeners();
-    return true;
+
+    return ShiftToggleResult(
+      success: true,
+      message: "You are now OFF DUTY.",
+    );
   }
 
   void _startTrackingTimer() {

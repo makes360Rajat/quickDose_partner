@@ -252,15 +252,51 @@ class SessionManager extends ChangeNotifier {
       }
     });
   } */
-  void processToLogout(BuildContext buildContext) {
+  void processToLogout(BuildContext buildContext) async {
     if (_isLoggingOut) return;
-    _isLoggingOut = true;
 
-    try {
-      if (isDeliveryBoy()) {
-        DeliveryBoyTrackingService.instance.endShift();
+    if (isDeliveryBoy() && DeliveryBoyTrackingService.instance.isOnDuty) {
+      final result = await DeliveryBoyTrackingService.instance.endShift();
+      if (!result.success && result.hasActiveOrders) {
+        showDialog(
+          context: buildContext,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Cannot Logout - Active Orders",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              result.message,
+              style: TextStyle(fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  "OK",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: ColorsRes.appColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+        return;
       }
-    } catch (_) {}
+    }
+
+    _isLoggingOut = true;
 
     buildContext.read<LogoutProvider>().logoutApiProvider(context: buildContext).then((_) {
       _doLogout(buildContext);

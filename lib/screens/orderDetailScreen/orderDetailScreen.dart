@@ -1421,7 +1421,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                                               } else if (isReturn) {
                                                                 returnOrdersProvider.setSelectedStatus(index.toString());
                                                               } else {
-                                                                ordersProvider.setSelectedStatus(index.toString());
+                                                                ordersProvider.setSelectedStatus(index.toString(), context: context);
                                                               }
                                                             },
                                                             child: Opacity(
@@ -1448,7 +1448,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                                                       } else if (isReturn) {
                                                                         returnOrdersProvider.setSelectedStatus(index.toString());
                                                                       } else {
-                                                                        ordersProvider.setSelectedStatus(index.toString());
+                                                                        ordersProvider.setSelectedStatus(index.toString(), context: context);
                                                                       }
                                                                     },
                                                                   ),

@@ -288,17 +288,63 @@ class _HomeScreenState extends State<HomeScreen> {
                       return GestureDetector(
                         onTap: () async {
                           final bool newStatus = !isOnDuty;
-                          final bool success = newStatus
-                              ? await DeliveryBoyTrackingService.instance.startShift()
-                              : await DeliveryBoyTrackingService.instance.endShift();
-                          if (mounted) {
-                            showMessage(
-                              context,
-                              success
-                                  ? (newStatus ? "You are now ON DUTY (Live Tracking active for Admin)" : "You are now OFF DUTY")
-                                  : "Could not update duty status. Please check GPS permissions.",
-                              success ? MessageType.success : MessageType.warning,
-                            );
+                          if (newStatus) {
+                            final bool success = await DeliveryBoyTrackingService.instance.startShift();
+                            if (mounted) {
+                              showMessage(
+                                context,
+                                success
+                                    ? "You are now ON DUTY (Live Tracking active for Admin)"
+                                    : "Could not update duty status. Please check GPS permissions.",
+                                success ? MessageType.success : MessageType.warning,
+                              );
+                            }
+                          } else {
+                            final ShiftToggleResult result = await DeliveryBoyTrackingService.instance.endShift();
+                            if (mounted) {
+                              if (result.success) {
+                                showMessage(
+                                  context,
+                                  "You are now OFF DUTY",
+                                  MessageType.success,
+                                );
+                              } else {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    title: Row(
+                                      children: [
+                                        Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            "Active Delivery In Progress",
+                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    content: Text(
+                                      result.message,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(ctx).pop(),
+                                        child: Text(
+                                          "OK",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: ColorsRes.appColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            }
                           }
                         },
                         child: Container(
@@ -1078,7 +1124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     children: List.generate(DeliveryBoyOrdersProvider.orderStatusesList.length/*  - 2 */, (index) {
                                                       return GestureDetector(
                                                         onTap: () {
-                                                          DeliveryBoyOrdersProvider.setSelectedStatus(index.toString());
+                                                          DeliveryBoyOrdersProvider.setSelectedStatus(index.toString(), context: context);
                                                         },
                                                         child: Container(
                                                           child: Row(
@@ -1096,7 +1142,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                                 value: DeliveryBoyOrdersProvider.selectedOrderStatus,
                                                                 groupValue: context.watch<OrderUpdateStatusProvider>().orderStatusesList[index].id,
                                                                 onChanged: (value) {
-                                                                  DeliveryBoyOrdersProvider.setSelectedStatus(index.toString());
+                                                                  DeliveryBoyOrdersProvider.setSelectedStatus(index.toString(), context: context);
                                                                 },
                                                               ),
                                                             ],

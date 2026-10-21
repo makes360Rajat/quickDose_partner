@@ -80,6 +80,28 @@ class OrderUpdateStatusProvider extends ChangeNotifier {
       if (getUpdatedOrderData[ApiAndParams.status].toString() == "1") {
         ordersStatusState = OrderUpdateStatusState.loaded;
         showMessage(context, getUpdatedOrderData[ApiAndParams.message], MessageType.success);
+
+        // Auto manage duty and active order for delivery boy
+        if (Constant.session.isDeliveryBoy()) {
+          final String statusId = params[ApiAndParams.statusId]?.toString() ?? "";
+          final String orderId = params[ApiAndParams.orderId]?.toString() ?? "";
+
+          if (statusId == "5") {
+            // Out for Delivery: Automatically change to ON DUTY and set active order
+            if (!DeliveryBoyTrackingService.instance.isOnDuty) {
+              DeliveryBoyTrackingService.instance.startShift();
+            }
+            if (orderId.isNotEmpty) {
+              DeliveryBoyTrackingService.instance.setActiveOrder(orderId);
+            }
+          } else if (statusId == "6" || statusId == "7" || statusId == "8") {
+            // Delivered, Cancelled, or Returned: Clear active order
+            if (DeliveryBoyTrackingService.instance.currentOrderId == orderId) {
+              DeliveryBoyTrackingService.instance.clearActiveOrder();
+            }
+          }
+        }
+
         notifyListeners();
         return true;
       } else {
@@ -98,13 +120,28 @@ class OrderUpdateStatusProvider extends ChangeNotifier {
     }
   }
 
-  setSelectedStatus(String index) {
+  setSelectedStatus(String index, {BuildContext? context}) {
     selectedOrderStatus = (int.parse(index) + 1).toString();
     if (orderStatusesList.isNotEmpty && int.parse(index) < orderStatusesList.length) {
       selectedOrderStatus = orderStatusesList[int.parse(index)].id.toString();
     } else {
       selectedOrderStatus = (int.parse(index) + 1).toString();
     }
+
+    // If Out for Delivery (status 5) is selected by a delivery boy,
+    // automatically transition off-duty to ON DUTY immediately!
+    if (Constant.session.isDeliveryBoy() && selectedOrderStatus == "5") {
+      if (!DeliveryBoyTrackingService.instance.isOnDuty) {
+        debugPrint("[OrderUpdateStatusProvider] Out for delivery status selected. Automatically transitioning to ON DUTY.");
+        DeliveryBoyTrackingService.instance.startShift();
+        final currentCtx = context ?? Constant.navigatorKay.currentContext;
+        if (currentCtx != null) {
+          showMessage(currentCtx, "Status: Automatically switched to ON DUTY for delivery", MessageType.success);
+        }
+      }
+    }
+
     notifyListeners();
   }
 }
+
