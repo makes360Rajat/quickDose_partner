@@ -484,12 +484,11 @@ class OrderContainer extends StatelessWidget {
                                       .ordersStatusState ==
                                   OrderUpdateStatusState.initial) {
                                     WidgetsBinding.instance.addPostFrameCallback((_) {
+                                int activeStatusInt = int.tryParse(order.activeStatus?.toString() ?? "1") ?? 1;
                                 context
                                     .read<OrderUpdateStatusProvider>()
                                     .setSelectedStatus(
-                                      (int.parse(order.activeStatus
-                                                  .toString()) -
-                                              1)
+                                      (activeStatusInt > 0 ? activeStatusInt - 1 : 0)
                                           .toString(),
                                     );
                                 context
@@ -611,6 +610,14 @@ class OrderContainer extends StatelessWidget {
                                             context,
                                             10,
                                             callback: () {
+                                              String effDbId = (order.deliveryBoyId != null &&
+                                                      order.deliveryBoyId.toString().isNotEmpty &&
+                                                      order.deliveryBoyId.toString() != "null" &&
+                                                      order.deliveryBoyId.toString() != "0")
+                                                  ? order.deliveryBoyId.toString()
+                                                  : Constant.session.getData(SessionManager.userId);
+                                              String effOrderId = (order.orderId ?? "").toString();
+
                                               if (!Constant.session.isSeller() &&
                                                   ordersProvider.selectedOrderStatus.toString() == "6") {
                                                 showDialog(
@@ -618,8 +625,8 @@ class OrderContainer extends StatelessWidget {
                                                   barrierDismissible: false,
                                                   builder: (BuildContext dialogContext) {
                                                     return DeliveryProofDialog(
-                                                      orderId: order.orderId.toString(),
-                                                      deliveryBoyId: order.deliveryBoyId.toString(),
+                                                      orderId: effOrderId,
+                                                      deliveryBoyId: effDbId,
                                                       statusId: "6",
                                                       otp: order.otp?.toString(),
                                                     );
@@ -631,14 +638,12 @@ class OrderContainer extends StatelessWidget {
                                                 });
                                               } else {
                                                 Map<String, String> params = {};
-                                                params[ApiAndParams.orderId] =
-                                                    order.orderId.toString();
+                                                params[ApiAndParams.orderId] = effOrderId;
                                                 params[ApiAndParams.statusId] =
                                                     ordersProvider
                                                         .selectedOrderStatus
                                                         .toString();
-                                                params[ApiAndParams.deliveryBoyId] =
-                                                    order.deliveryBoyId.toString();
+                                                params[ApiAndParams.deliveryBoyId] = effDbId;
                                                 ordersProvider
                                                     .updateOrdersStatus(
                                                       params: params,

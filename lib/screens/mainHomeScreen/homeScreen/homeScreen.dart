@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String endDate = "";
 
   scrollListener() {
+    if (!scrollController.hasClients) return;
     // nextPageTrigger will have a value equivalent to 70% of the list size.
     var nextPageTrigger = scrollController.position.maxScrollExtent;
 
@@ -41,6 +42,15 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     }
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(scrollListener);
+    scrollController.dispose();
+    focusNode.dispose();
+    searchController.dispose();
+    super.dispose();
   }
 
   Future callApi({bool? reset, bool? silentLoading}) async {
@@ -965,9 +975,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 getSizedBox(width: 10),
                 CustomTextLabel(
                   text: getCurrencyFormat(
-                    double.parse(
-                      order.finalTotal.toString(),
-                    ),
+                    double.tryParse(
+                          order.finalTotal?.toString() ?? "0",
+                        ) ??
+                        0.0,
                   ),
                   style: TextStyle(fontWeight: FontWeight.w700, color: ColorsRes.appColor),
                   softWrap: true,
@@ -1032,7 +1043,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             getSizedBox(height: 2),
             CustomTextLabel(
-              text: "${getTranslatedValue(context, order.paymentMethod!.toLowerCase())}",
+              text: (order.paymentMethod != null &&
+                      order.paymentMethod.toString().isNotEmpty &&
+                      order.paymentMethod.toString() != "null")
+                  ? getTranslatedValue(context, order.paymentMethod!.toLowerCase())
+                  : "",
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 color: ColorsRes.mainTextColor,
@@ -1057,19 +1072,72 @@ class _HomeScreenState extends State<HomeScreen> {
             getSizedBox(
               height: 10,
             ),
-            order.activeStatus == "8" ? const SizedBox.shrink() : Divider(height: 1, color: ColorsRes.grey, thickness: 0),
-            order.activeStatus == "8"
-                ? const SizedBox.shrink()
-                : getSizedBox(
-                    height: 10,
-                  ),
+            Divider(height: 1, color: ColorsRes.grey, thickness: 0),
+            getSizedBox(
+              height: 10,
+            ),
             Row(
               mainAxisAlignment: .spaceBetween,
               crossAxisAlignment: .center,
               children: [
                 Expanded(
-                  child: order.activeStatus == "8"
-                      ? const SizedBox.shrink()
+                  child: (order.activeStatus == "6" ||
+                          order.activeStatus == "7" ||
+                          order.activeStatus == "8")
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: order.activeStatus == "6"
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : order.activeStatus == "7"
+                                    ? Colors.red.withValues(alpha: 0.1)
+                                    : Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: order.activeStatus == "6"
+                                  ? Colors.green
+                                  : order.activeStatus == "7"
+                                      ? Colors.red
+                                      : Colors.orange,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                order.activeStatus == "6"
+                                    ? Icons.check_circle_rounded
+                                    : order.activeStatus == "7"
+                                        ? Icons.cancel_rounded
+                                        : Icons.assignment_return_rounded,
+                                size: 18,
+                                color: order.activeStatus == "6"
+                                    ? Colors.green
+                                    : order.activeStatus == "7"
+                                        ? Colors.red
+                                        : Colors.orange,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                order.activeStatus == "6"
+                                    ? getTranslatedValue(context, orderStatusDisplayNamesDeliveredLabel)
+                                    : order.activeStatus == "7"
+                                        ? getTranslatedValue(context, orderStatusDisplayNamesCancelledLabel)
+                                        : getTranslatedValue(context, orderStatusDisplayNamesReturnedLabel),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: order.activeStatus == "6"
+                                      ? Colors.green.shade800
+                                      : order.activeStatus == "7"
+                                          ? Colors.red.shade800
+                                          : Colors.orange.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
                       : GestureDetector(
                           onTap: () {
                             showModalBottomSheet<void>(
@@ -1085,8 +1153,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         builder: (context, DeliveryBoyOrdersProvider, child) {
                                           if (context.read<OrderUpdateStatusProvider>().ordersStatusState == OrderUpdateStatusState.initial) {
                                             WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              int activeStatusInt = int.tryParse(order.activeStatus?.toString() ?? "1") ?? 1;
                                               context.read<OrderUpdateStatusProvider>().setSelectedStatus(
-                                                    (int.parse(order.activeStatus.toString()) - 1).toString(),
+                                                    (activeStatusInt > 0 ? activeStatusInt - 1 : 0).toString(),
                                                   );
                                               context.read<OrderUpdateStatusProvider>().getOrdersStatuses(context: context, from: "");
                                             });
@@ -1177,9 +1246,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                                              context: context,
                                                              barrierDismissible: false,
                                                              builder: (BuildContext dialogContext) {
+                                                               String effDbId = (order.deliveryBoyId != null &&
+                                                                       order.deliveryBoyId.toString().isNotEmpty &&
+                                                                       order.deliveryBoyId.toString() != "null" &&
+                                                                       order.deliveryBoyId.toString() != "0")
+                                                                   ? order.deliveryBoyId.toString()
+                                                                   : Constant.session.getData(SessionManager.userId);
                                                                return DeliveryProofDialog(
-                                                                 orderId: (order.id ?? order.orderId).toString(),
-                                                                 deliveryBoyId: order.deliveryBoyId.toString(),
+                                                                 orderId: (order.id ?? order.orderId ?? "").toString(),
+                                                                 deliveryBoyId: effDbId,
                                                                  statusId: "6",
                                                                  otp: order.otp?.toString(),
                                                                );
@@ -1191,10 +1266,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                                              }
                                                            });
                                                          } else {
+                                                           String effDbId = (order.deliveryBoyId != null &&
+                                                                   order.deliveryBoyId.toString().isNotEmpty &&
+                                                                   order.deliveryBoyId.toString() != "null" &&
+                                                                   order.deliveryBoyId.toString() != "0")
+                                                               ? order.deliveryBoyId.toString()
+                                                               : Constant.session.getData(SessionManager.userId);
                                                            Map<String, String> params = {};
-                                                           params[ApiAndParams.orderId] = (order.id ?? order.orderId).toString();
+                                                           params[ApiAndParams.orderId] = (order.id ?? order.orderId ?? "").toString();
                                                            params[ApiAndParams.statusId] = DeliveryBoyOrdersProvider.selectedOrderStatus.toString();
-                                                           params[ApiAndParams.deliveryBoyId] = order.deliveryBoyId.toString();
+                                                           params[ApiAndParams.deliveryBoyId] = effDbId;
                                                            DeliveryBoyOrdersProvider.updateOrdersStatus(
                                                              params: params,
                                                              context: context,

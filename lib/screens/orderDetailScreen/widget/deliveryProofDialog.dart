@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:project/helper/utils/generalImports.dart';
+import 'package:project/screens/orderDetailScreen/widget/inAppCameraScreen.dart';
 
 class DeliveryProofDialog extends StatefulWidget {
   final String orderId;
@@ -34,6 +35,40 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
       widget.otp.toString().trim().isNotEmpty;
 
   @override
+  void initState() {
+    super.initState();
+    _retrieveLostData();
+  }
+
+  Future<void> _retrieveLostData() async {
+    try {
+      final LostDataResponse response = await _imagePicker.retrieveLostData();
+      if (response.isEmpty) return;
+      if (response.file != null && response.file!.path.isNotEmpty) {
+        final File file = File(response.file!.path);
+        if (file.existsSync() && _selectedImages.length < 3) {
+          setState(() {
+            _selectedImages.add(file);
+          });
+        }
+      } else if (response.files != null && response.files!.isNotEmpty) {
+        setState(() {
+          for (var x in response.files!) {
+            if (_selectedImages.length < 3 && x.path.isNotEmpty) {
+              final File file = File(x.path);
+              if (file.existsSync()) {
+                _selectedImages.add(file);
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error retrieving lost camera data: $e");
+    }
+  }
+
+  @override
   void dispose() {
     _otpController.dispose();
     _focusNode.dispose();
@@ -49,20 +84,44 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
       );
       return;
     }
+
     try {
-      final XFile? photo = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 80,
-        maxWidth: 1920,
-        maxHeight: 1920,
+      // In-App Camera: keeps app in foreground so Android LMKD never kills the process
+      final File? capturedFile = await Navigator.push<File>(
+        context,
+        MaterialPageRoute(builder: (_) => const InAppCameraScreen()),
       );
-      if (photo != null && photo.path.isNotEmpty) {
-        setState(() {
-          _selectedImages.add(File(photo.path));
-        });
+
+      if (capturedFile != null && capturedFile.existsSync()) {
+        if (mounted) {
+          setState(() {
+            _selectedImages.add(capturedFile);
+          });
+        }
       }
     } catch (e) {
-      showMessage(context, e.toString(), MessageType.error);
+      debugPrint("In-app camera error, falling back to picker: $e");
+      try {
+        final XFile? photo = await _imagePicker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 70,
+          maxWidth: 1024,
+          maxHeight: 1024,
+          preferredCameraDevice: CameraDevice.rear,
+        );
+        if (photo != null && photo.path.isNotEmpty) {
+          final File file = File(photo.path);
+          if (file.existsSync() && mounted) {
+            setState(() {
+              _selectedImages.add(file);
+            });
+          }
+        }
+      } catch (fallbackError) {
+        if (mounted) {
+          showMessage(context, "Could not open camera: ${fallbackError.toString()}", MessageType.error);
+        }
+      }
     }
   }
 
@@ -77,16 +136,19 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
     }
     try {
       final List<XFile> photos = await _imagePicker.pickMultiImage(
-        imageQuality: 80,
-        maxWidth: 1920,
-        maxHeight: 1920,
+        imageQuality: 70,
+        maxWidth: 1024,
+        maxHeight: 1024,
       );
       if (photos.isNotEmpty) {
         int availableSlots = 3 - _selectedImages.length;
-        List<File> newFiles = photos
-            .take(availableSlots)
-            .map((x) => File(x.path))
-            .toList();
+        List<File> newFiles = [];
+        for (var x in photos.take(availableSlots)) {
+          if (x.path.isNotEmpty) {
+            final f = File(x.path);
+            if (f.existsSync()) newFiles.add(f);
+          }
+        }
         if (photos.length > availableSlots) {
           showMessage(
             context,
@@ -94,11 +156,31 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
             MessageType.warning,
           );
         }
-        setState(() {
-          _selectedImages.addAll(newFiles);
-        });
+        if (newFiles.isNotEmpty) {
+          setState(() {
+            _selectedImages.addAll(newFiles);
+          });
+        }
       }
     } catch (e) {
+      try {
+        final XFile? singlePhoto = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 70,
+          maxWidth: 1024,
+          maxHeight: 1024,
+        );
+        if (singlePhoto != null && singlePhoto.path.isNotEmpty) {
+          final f = File(singlePhoto.path);
+          if (f.existsSync()) {
+            setState(() {
+              _selectedImages.add(f);
+            });
+            return;
+          }
+        }
+      } catch (_) {}
+
       try {
         FilePickerResult? result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
@@ -110,7 +192,10 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
           List<File> newFiles = [];
           for (String? path in result.paths) {
             if (path != null && path.isNotEmpty) {
-              newFiles.add(File(path));
+              final f = File(path);
+              if (f.existsSync()) {
+                newFiles.add(f);
+              }
             }
           }
           if (newFiles.length > availableSlots) {
@@ -121,9 +206,11 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
             );
             newFiles = newFiles.sublist(0, availableSlots);
           }
-          setState(() {
-            _selectedImages.addAll(newFiles);
-          });
+          if (newFiles.isNotEmpty) {
+            setState(() {
+              _selectedImages.addAll(newFiles);
+            });
+          }
         }
       } catch (_) {
         showMessage(context, e.toString(), MessageType.error);
@@ -339,7 +426,10 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
                 child: InteractiveViewer(
                   child: Image.file(
                     imageFile,
+                    cacheWidth: 1024,
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Center(child: Icon(Icons.broken_image, color: Colors.white, size: 48)),
                   ),
                 ),
               ),
@@ -633,7 +723,14 @@ class _DeliveryProofDialogState extends State<DeliveryProofDialog> {
                                   _selectedImages[index],
                                   width: 80,
                                   height: 80,
+                                  cacheWidth: 200,
+                                  cacheHeight: 200,
                                   fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        color: ColorsRes.grey.withValues(alpha: 0.2),
+                                        child: const Icon(Icons.broken_image, color: Colors.grey, size: 24),
+                                      ),
                                 ),
                               ),
                             ),
